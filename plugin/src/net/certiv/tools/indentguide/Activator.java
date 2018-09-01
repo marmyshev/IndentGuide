@@ -8,11 +8,12 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.eclipse.ui.themes.ColorUtil;
 import org.osgi.framework.BundleContext;
 
-import net.certiv.tools.indentguide.preferences.PreferenceConstants;
+import net.certiv.tools.indentguide.preferences.Keys;
 
 public class Activator extends AbstractUIPlugin {
 
 	public static final String PLUGIN_ID = "net.certiv.tools.indentguide"; //$NON-NLS-1$
+
 	private static Activator plugin;
 	private Color color;
 
@@ -45,7 +46,7 @@ public class Activator extends AbstractUIPlugin {
 
 	public Color getColor() {
 		if (color == null) {
-			String colorString = getPreferenceStore().getString(PreferenceConstants.LINE_COLOR);
+			String colorString = getPreferenceStore().getString(Keys.LINE_COLOR);
 			color = new Color(PlatformUI.getWorkbench().getDisplay(), ColorUtil.getColorValue(colorString));
 		}
 		return color;

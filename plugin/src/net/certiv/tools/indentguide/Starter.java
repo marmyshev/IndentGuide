@@ -25,7 +25,7 @@ import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.IDocumentProviderExtension4;
 import org.eclipse.ui.texteditor.ITextEditor;
 
-import net.certiv.tools.indentguide.preferences.PreferenceConstants;
+import net.certiv.tools.indentguide.preferences.Keys;
 
 public class Starter implements IStartup {
 
@@ -33,7 +33,7 @@ public class Starter implements IStartup {
 
 	private void addListener(IEditorPart part) {
 		IPreferenceStore store = Activator.getDefault().getPreferenceStore();
-		if (store.getBoolean(PreferenceConstants.ENABLED)) {
+		if (store.getBoolean(Keys.ENABLED)) {
 			if (part instanceof AbstractTextEditor) {
 				IContentType contentType = null;
 				ITextEditor textEditor = (ITextEditor) part;
@@ -48,7 +48,7 @@ public class Starter implements IStartup {
 					return;
 				}
 				String id = contentType.getId();
-				String[] types = store.getString(PreferenceConstants.CONTENT_TYPES).split("\\|");
+				String[] types = store.getString(Keys.CONTENT_TYPES).split("\\|");
 				List<String> contentTypes = Arrays.asList(types);
 				if (!contentTypes.contains(id)) return;
 

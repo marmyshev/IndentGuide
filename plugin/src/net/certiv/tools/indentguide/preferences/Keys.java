@@ -3,7 +3,7 @@ package net.certiv.tools.indentguide.preferences;
 /**
  * Constant definitions for plug-in preferences
  */
-public class PreferenceConstants {
+public class Keys {
 
 	public static final String ENABLED = "enabled"; //$NON-NLS-1$
 	public static final String LINE_ALPHA = "line_alpha"; //$NON-NLS-1$

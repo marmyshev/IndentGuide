@@ -30,12 +30,11 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.LineAttributes;
 import org.eclipse.swt.graphics.Point;
 
-import net.certiv.tools.indentguide.preferences.PreferenceConstants;
+import net.certiv.tools.indentguide.preferences.Keys;
 
 /**
- * A painter for drawing visible characters for (invisible) whitespace characters.
+ * A painter for drawing visible indent guide lines.
  *
- * @since 3.3
  * @see org.eclipse.jface.text.WhitespaceCharacterPainter
  */
 public class IndentGuidePainter implements IPainter, PaintListener {
@@ -73,13 +72,13 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 		gc.dispose();
 
 		IPreferenceStore store = Activator.getDefault().getPreferenceStore();
-		lineAlpha = store.getInt(PreferenceConstants.LINE_ALPHA);
-		lineStyle = store.getInt(PreferenceConstants.LINE_STYLE);
-		lineWidth = store.getInt(PreferenceConstants.LINE_WIDTH);
-		lineShift = store.getInt(PreferenceConstants.LINE_SHIFT);
-		drawLeftEnd = store.getBoolean(PreferenceConstants.DRAW_LEFT_END);
-		drawBlankLine = store.getBoolean(PreferenceConstants.DRAW_BLANK_LINE);
-		skipCommentBlock = store.getBoolean(PreferenceConstants.SKIP_COMMENT_BLOCK);
+		lineAlpha = store.getInt(Keys.LINE_ALPHA);
+		lineStyle = store.getInt(Keys.LINE_STYLE);
+		lineWidth = store.getInt(Keys.LINE_WIDTH);
+		lineShift = store.getInt(Keys.LINE_SHIFT);
+		drawLeftEnd = store.getBoolean(Keys.DRAW_LEFT_END);
+		drawBlankLine = store.getBoolean(Keys.DRAW_BLANK_LINE);
+		skipCommentBlock = store.getBoolean(Keys.SKIP_COMMENT_BLOCK);
 	}
 
 	@Override

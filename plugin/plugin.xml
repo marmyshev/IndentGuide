@@ -5,15 +5,15 @@
          point="org.eclipse.ui.preferencePages">
       <page
             category="org.eclipse.ui.preferencePages.GeneralTextEditor"
-            class="net.certiv.tools.indentguide.preferences.IndentGuidePreferencePage"
-            id="net.certiv.tools.indentguide.preferences.PreferencePage"
-            name="IndentGuide">
+            class="net.certiv.tools.indentguide.preferences.SettingsPage"
+            id="net.certiv.tools.indentguide.preferences.SettingsPage"
+            name="Indent Guide">
       </page>
    </extension>
    <extension
          point="org.eclipse.core.runtime.preferences">
       <initializer
-            class="net.certiv.tools.indentguide.preferences.PreferenceInitializer">
+            class="net.certiv.tools.indentguide.preferences.Initializer">
       </initializer>
    </extension>
    <extension

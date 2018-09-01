@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="net.certiv.tools.indentGuide.feature"
+      id="net.certiv.tools.indentguide.feature"
       label="IndentGuide"
       version="1.4.2.qualifier"
       provider-name="Certiv Analytis">
@@ -16,7 +16,7 @@ https://github.com/kiritsuku
    <license url="">
       The MIT License (MIT)
 
-Copyright (c) 2014-2018 Simon Schäfer and others.
+Copyright (c) 2014-2018 the IndentGuide Authors.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the &quot;Software&quot;), to deal
@@ -40,6 +40,13 @@ SOFTWARE.
    <url>
       <update label="Certiv Tools" url="https://www.certiv.net/update"/>
    </url>
+
+   <requires>
+      <import plugin="org.eclipse.ui" version="3.109.100" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.core.runtime" version="3.14.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.jface.text" version="3.13.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.ui.workbench.texteditor" version="3.11.0" match="greaterOrEqual"/>
+   </requires>
 
    <plugin
          id="net.certiv.tools.indentguide"

@@ -29,11 +29,10 @@ import org.eclipse.ui.PlatformUI;
 
 import net.certiv.tools.indentguide.Activator;
 
-public class IndentGuidePreferencePage extends PreferencePage implements IWorkbenchPreferencePage {
+public class SettingsPage extends PreferencePage implements IWorkbenchPreferencePage {
 
-	private static final String[] styles = { Messages.IndentGuidePreferencePage_style_solid,
-			Messages.IndentGuidePreferencePage_style_dash, Messages.IndentGuidePreferencePage_style_dot,
-			Messages.IndentGuidePreferencePage_style_dash_dot, Messages.IndentGuidePreferencePage_style_dash_dot_dot };
+	private static final String[] styles = { SettingsMessages.Settings_style_solid, SettingsMessages.Settings_style_dash,
+			SettingsMessages.Settings_style_dot, SettingsMessages.Settings_style_dash_dot, SettingsMessages.Settings_style_dash_dot_dot };
 
 	private Button enabled;
 	private Composite attributes;
@@ -50,9 +49,9 @@ public class IndentGuidePreferencePage extends PreferencePage implements IWorkbe
 	private Tree contentTypesTree;
 	private IContentType textType;
 
-	public IndentGuidePreferencePage() {
+	public SettingsPage() {
 		setPreferenceStore(Activator.getDefault().getPreferenceStore());
-		setDescription(Messages.IndentGuidePreferencePage_description);
+		setDescription(SettingsMessages.Settings_description);
 		textType = Platform.getContentTypeManager().getContentType(IContentTypeManager.CT_TEXT);
 	}
 
@@ -65,7 +64,7 @@ public class IndentGuidePreferencePage extends PreferencePage implements IWorkbe
 		composite.setLayout(new GridLayout(1, true));
 
 		enabled = new Button(composite, SWT.CHECK);
-		enabled.setText(Messages.IndentGuidePreferencePage_enabled_label);
+		enabled.setText(SettingsMessages.Settings_enabled_label);
 		enabled.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
@@ -77,51 +76,50 @@ public class IndentGuidePreferencePage extends PreferencePage implements IWorkbe
 		final Group group = new Group(composite, SWT.NONE);
 		group.setLayoutData(new GridData(SWT.FILL, SWT.BEGINNING, true, false));
 		group.setLayout(new GridLayout(1, true));
-		group.setText(Messages.IndentGuidePreferencePage_group_label);
+		group.setText(SettingsMessages.Settings_group_label);
 		attributes = new Composite(group, SWT.NONE);
 		final GridData gridData = new GridData(SWT.FILL, SWT.BEGINNING, true, false);
 		gridData.horizontalIndent = 5;
 		attributes.setLayoutData(gridData);
 		attributes.setLayout(new GridLayout(2, false));
 
-		new Label(attributes, SWT.NONE).setText(Messages.IndentGuidePreferencePage_alpha_label);
+		new Label(attributes, SWT.NONE).setText(SettingsMessages.Settings_alpha_label);
 		lineAlpha = new Spinner(attributes, SWT.BORDER);
 		lineAlpha.setMinimum(0);
 		lineAlpha.setMaximum(255);
-		new Label(attributes, SWT.NONE).setText(Messages.IndentGuidePreferencePage_style_label);
+		new Label(attributes, SWT.NONE).setText(SettingsMessages.Settings_style_label);
 		lineStyle = new Combo(attributes, SWT.READ_ONLY);
 		lineStyle.setItems(styles);
-		new Label(attributes, SWT.NONE).setText(Messages.IndentGuidePreferencePage_width_label);
+		new Label(attributes, SWT.NONE).setText(SettingsMessages.Settings_width_label);
 		lineWidth = new Spinner(attributes, SWT.BORDER);
 		lineWidth.setMinimum(1);
 		lineWidth.setMaximum(8);
-		new Label(attributes, SWT.NONE).setText(Messages.IndentGuidePreferencePage_shift_label);
+		new Label(attributes, SWT.NONE).setText(SettingsMessages.Settings_shift_label);
 		lineShift = new Spinner(attributes, SWT.BORDER);
 		lineShift.setMinimum(0);
 		lineShift.setMaximum(8);
-		colorFieldEditor = new ColorFieldEditor(PreferenceConstants.LINE_COLOR,
-				Messages.IndentGuidePreferencePage_color_label, attributes);
+		colorFieldEditor = new ColorFieldEditor(Keys.LINE_COLOR, SettingsMessages.Settings_color_label, attributes);
 		colorFieldEditor.setPreferenceStore(getPreferenceStore());
 
 		final Group group2 = new Group(composite, SWT.NONE);
 		group2.setLayoutData(new GridData(SWT.FILL, SWT.BEGINNING, true, false));
 		group2.setLayout(new GridLayout(1, true));
-		group2.setText(Messages.IndentGuidePreferencePage_group2_label);
+		group2.setText(SettingsMessages.Settings_group2_label);
 		drawing = new Composite(group2, SWT.NONE);
 		drawing.setLayoutData(new GridData(SWT.FILL, SWT.BEGINNING, true, false));
 		drawing.setLayout(new GridLayout(1, false));
 
 		drawLeftEnd = new Button(drawing, SWT.CHECK);
-		drawLeftEnd.setText(Messages.IndentGuidePreferencePage_draw_left_end_label);
+		drawLeftEnd.setText(SettingsMessages.Settings_draw_left_end_label);
 		drawBlankLine = new Button(drawing, SWT.CHECK);
-		drawBlankLine.setText(Messages.IndentGuidePreferencePage_draw_blank_line_label);
+		drawBlankLine.setText(SettingsMessages.Settings_draw_blank_line_label);
 		skipCommentBlock = new Button(drawing, SWT.CHECK);
-		skipCommentBlock.setText(Messages.IndentGuidePreferencePage_skip_comment_block_label);
+		skipCommentBlock.setText(SettingsMessages.Settings_skip_comment_block_label);
 
 		final Group group3 = new Group(composite, SWT.NONE);
 		group3.setLayoutData(new GridData(SWT.FILL, SWT.BEGINNING, true, false));
 		group3.setLayout(new GridLayout(1, true));
-		group3.setText(Messages.IndentGuidePreferencePage_group3_label);
+		group3.setText(SettingsMessages.Settings_group3_label);
 		target = new Composite(group3, SWT.NONE);
 		target.setLayoutData(new GridData(SWT.FILL, SWT.BEGINNING, true, false));
 		target.setLayout(new GridLayout(1, false));
@@ -153,24 +151,24 @@ public class IndentGuidePreferencePage extends PreferencePage implements IWorkbe
 	protected void performDefaults() {
 		super.performDefaults();
 		final IPreferenceStore store = getPreferenceStore();
-		enabled.setSelection(store.getDefaultBoolean(PreferenceConstants.ENABLED));
-		lineAlpha.setSelection(store.getDefaultInt(PreferenceConstants.LINE_ALPHA));
-		int index = store.getDefaultInt(PreferenceConstants.LINE_STYLE) - 1;
+		enabled.setSelection(store.getDefaultBoolean(Keys.ENABLED));
+		lineAlpha.setSelection(store.getDefaultInt(Keys.LINE_ALPHA));
+		int index = store.getDefaultInt(Keys.LINE_STYLE) - 1;
 		if (index < 0 || index >= styles.length) {
 			index = 0;
 		}
 		lineStyle.setText(styles[index]);
-		lineWidth.setSelection(store.getDefaultInt(PreferenceConstants.LINE_WIDTH));
-		lineShift.setSelection(store.getDefaultInt(PreferenceConstants.LINE_SHIFT));
+		lineWidth.setSelection(store.getDefaultInt(Keys.LINE_WIDTH));
+		lineShift.setSelection(store.getDefaultInt(Keys.LINE_SHIFT));
 		colorFieldEditor.loadDefault();
-		drawLeftEnd.setSelection(store.getDefaultBoolean(PreferenceConstants.DRAW_LEFT_END));
-		drawBlankLine.setSelection(store.getDefaultBoolean(PreferenceConstants.DRAW_BLANK_LINE));
-		skipCommentBlock.setSelection(store.getDefaultBoolean(PreferenceConstants.SKIP_COMMENT_BLOCK));
+		drawLeftEnd.setSelection(store.getDefaultBoolean(Keys.DRAW_LEFT_END));
+		drawBlankLine.setSelection(store.getDefaultBoolean(Keys.DRAW_BLANK_LINE));
+		skipCommentBlock.setSelection(store.getDefaultBoolean(Keys.SKIP_COMMENT_BLOCK));
 		enableControls(enabled.getSelection());
 		for (final TreeItem item : contentTypesTree.getItems()) {
 			checkItems(item, false);
 		}
-		final String type = store.getDefaultString(PreferenceConstants.CONTENT_TYPES);
+		final String type = store.getDefaultString(Keys.CONTENT_TYPES);
 		final String types[] = type.split("\\|");
 		for (final TreeItem child : contentTypesTree.getItems()) {
 			checkContentType(child, types);
@@ -180,43 +178,43 @@ public class IndentGuidePreferencePage extends PreferencePage implements IWorkbe
 	@Override
 	public boolean performOk() {
 		final IPreferenceStore store = getPreferenceStore();
-		store.setValue(PreferenceConstants.ENABLED, enabled.getSelection());
-		store.setValue(PreferenceConstants.LINE_ALPHA, lineAlpha.getSelection());
-		store.setValue(PreferenceConstants.LINE_STYLE, lineStyle.getSelectionIndex() + 1);
-		store.setValue(PreferenceConstants.LINE_WIDTH, lineWidth.getSelection());
-		store.setValue(PreferenceConstants.LINE_SHIFT, lineShift.getSelection());
+		store.setValue(Keys.ENABLED, enabled.getSelection());
+		store.setValue(Keys.LINE_ALPHA, lineAlpha.getSelection());
+		store.setValue(Keys.LINE_STYLE, lineStyle.getSelectionIndex() + 1);
+		store.setValue(Keys.LINE_WIDTH, lineWidth.getSelection());
+		store.setValue(Keys.LINE_SHIFT, lineShift.getSelection());
 		colorFieldEditor.store();
 		final RGB rgb = colorFieldEditor.getColorSelector().getColorValue();
 		final Color color = new Color(PlatformUI.getWorkbench().getDisplay(), rgb);
 		Activator.getDefault().setColor(color);
-		store.setValue(PreferenceConstants.DRAW_LEFT_END, drawLeftEnd.getSelection());
-		store.setValue(PreferenceConstants.DRAW_BLANK_LINE, drawBlankLine.getSelection());
-		store.setValue(PreferenceConstants.SKIP_COMMENT_BLOCK, skipCommentBlock.getSelection());
+		store.setValue(Keys.DRAW_LEFT_END, drawLeftEnd.getSelection());
+		store.setValue(Keys.DRAW_BLANK_LINE, drawBlankLine.getSelection());
+		store.setValue(Keys.SKIP_COMMENT_BLOCK, skipCommentBlock.getSelection());
 		String types = "";
 		for (final TreeItem item : contentTypesTree.getItems()) {
 			types = getContentTypes(item, types);
 		}
-		store.setValue(PreferenceConstants.CONTENT_TYPES, types);
+		store.setValue(Keys.CONTENT_TYPES, types);
 		return super.performOk();
 	}
 
 	private void loadPreferences() {
 		final IPreferenceStore store = getPreferenceStore();
-		enabled.setSelection(store.getBoolean(PreferenceConstants.ENABLED));
-		lineAlpha.setSelection(store.getInt(PreferenceConstants.LINE_ALPHA));
-		int index = store.getInt(PreferenceConstants.LINE_STYLE) - 1;
+		enabled.setSelection(store.getBoolean(Keys.ENABLED));
+		lineAlpha.setSelection(store.getInt(Keys.LINE_ALPHA));
+		int index = store.getInt(Keys.LINE_STYLE) - 1;
 		if (index < 0 || index >= styles.length) {
 			index = 0;
 		}
 		lineStyle.setText(styles[index]);
-		lineWidth.setSelection(store.getInt(PreferenceConstants.LINE_WIDTH));
-		lineShift.setSelection(store.getInt(PreferenceConstants.LINE_SHIFT));
+		lineWidth.setSelection(store.getInt(Keys.LINE_WIDTH));
+		lineShift.setSelection(store.getInt(Keys.LINE_SHIFT));
 		colorFieldEditor.load();
-		drawLeftEnd.setSelection(store.getBoolean(PreferenceConstants.DRAW_LEFT_END));
-		drawBlankLine.setSelection(store.getBoolean(PreferenceConstants.DRAW_BLANK_LINE));
-		skipCommentBlock.setSelection(store.getBoolean(PreferenceConstants.SKIP_COMMENT_BLOCK));
+		drawLeftEnd.setSelection(store.getBoolean(Keys.DRAW_LEFT_END));
+		drawBlankLine.setSelection(store.getBoolean(Keys.DRAW_BLANK_LINE));
+		skipCommentBlock.setSelection(store.getBoolean(Keys.SKIP_COMMENT_BLOCK));
 		enableControls(enabled.getSelection());
-		final String type = store.getString(PreferenceConstants.CONTENT_TYPES);
+		final String type = store.getString(Keys.CONTENT_TYPES);
 		final String types[] = type.split("\\|");
 		for (final TreeItem child : contentTypesTree.getItems()) {
 			checkContentType(child, types);
