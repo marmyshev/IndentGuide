@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <bundle id="net.certiv.tools.indentguide" version="1.5.0.qualifier">
+   <feature url="features/net.certiv.tools.indentguide.feature_1.5.0.qualifier.jar" id="net.certiv.tools.indentguide.feature" version="1.5.0.qualifier">
       <category name="net.certiv"/>
-   </bundle>
+   </feature>
    <category-def name="net.certiv" label="Certiv Tools"/>
 </site>
