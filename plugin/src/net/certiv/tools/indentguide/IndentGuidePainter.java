@@ -1,16 +1,11 @@
-/*******************************************************************************
- * Copyright (c) 2006, 2009 Wind River Systems, Inc., IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+/******************************************************************************
+ * Copyright (c) 2006-2018 The IndentGuide Authors.
+ * All rights reserved.
  *
- * Contributors:
- *     Anton Leherbauer (Wind River Systems) - initial API and implementation - https://bugs.eclipse.org/bugs/show_bug.cgi?id=22712
- *     Anton Leherbauer (Wind River Systems) - [painting] Long lines take too long to display when "Show Whitespace Characters" is enabled - https://bugs.eclipse.org/bugs/show_bug.cgi?id=196116
- *     Anton Leherbauer (Wind River Systems) - [painting] Whitespace characters not drawn when scrolling to right slowly - https://bugs.eclipse.org/bugs/show_bug.cgi?id=206633
- *     Tom Eicher (Avaloq Evolution AG) - block selection mode
- *******************************************************************************/
+ * This program and the accompanying materials are made available under the
+ * terms of the MIT License.  A copy of the MIT License is included this
+ * distribution and is available at https://opensource.org/licenses/MIT.
+ *****************************************************************************/
 package net.certiv.tools.indentguide;
 
 import org.eclipse.jface.preference.IPreferenceStore;

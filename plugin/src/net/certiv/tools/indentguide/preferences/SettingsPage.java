@@ -1,3 +1,11 @@
+/******************************************************************************
+ * Copyright (c) 2006-2018 The IndentGuide Authors.
+ * All rights reserved.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the MIT License.  A copy of the MIT License is included this
+ * distribution and is available at https://opensource.org/licenses/MIT.
+ *****************************************************************************/
 package net.certiv.tools.indentguide.preferences;
 
 import org.eclipse.core.runtime.Platform;
@@ -31,8 +39,9 @@ import net.certiv.tools.indentguide.Activator;
 
 public class SettingsPage extends PreferencePage implements IWorkbenchPreferencePage {
 
-	private static final String[] styles = { SettingsMessages.Settings_style_solid, SettingsMessages.Settings_style_dash,
-			SettingsMessages.Settings_style_dot, SettingsMessages.Settings_style_dash_dot, SettingsMessages.Settings_style_dash_dot_dot };
+	private static final String[] styles = { SettingsMessages.Settings_style_solid,
+			SettingsMessages.Settings_style_dash, SettingsMessages.Settings_style_dot,
+			SettingsMessages.Settings_style_dash_dot, SettingsMessages.Settings_style_dash_dot_dot };
 
 	private Button enabled;
 	private Composite attributes;

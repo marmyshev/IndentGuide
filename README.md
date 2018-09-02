@@ -17,3 +17,14 @@ https://www.certiv.net/update
 ### License
 
 MIT
+
+### Authors
+
+The IndentGuide Authors
+
+- IBM Corporation
+- Anton Leherbauer (Wind River Systems)
+- atlanto         (github.com/atlanto)
+- kiritsuku       (github.com/kiritsuku)
+- Roman Dawydkin  (github.com/tanmatra)
+- Gerald Rosenberg (Certiv Analytics; github.com/grosenberg)
