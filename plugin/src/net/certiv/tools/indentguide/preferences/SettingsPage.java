@@ -98,7 +98,7 @@ public class SettingsPage extends PreferencePage implements IWorkbenchPreference
 		lineShift = new Spinner(attributes, SWT.BORDER);
 		lineShift.setMinimum(0);
 		lineShift.setMaximum(8);
-		colorFieldEditor = new ColorFieldEditor(Keys.LINE_COLOR, SettingsMessages.Settings_color_label, attributes);
+		colorFieldEditor = new ColorFieldEditor(Settings.LINE_COLOR, SettingsMessages.Settings_color_label, attributes);
 		colorFieldEditor.setPreferenceStore(getPreferenceStore());
 
 		final Group group2 = new Group(composite, SWT.NONE);
@@ -151,24 +151,24 @@ public class SettingsPage extends PreferencePage implements IWorkbenchPreference
 	protected void performDefaults() {
 		super.performDefaults();
 		final IPreferenceStore store = getPreferenceStore();
-		enabled.setSelection(store.getDefaultBoolean(Keys.ENABLED));
-		lineAlpha.setSelection(store.getDefaultInt(Keys.LINE_ALPHA));
-		int index = store.getDefaultInt(Keys.LINE_STYLE) - 1;
+		enabled.setSelection(store.getDefaultBoolean(Settings.ENABLED));
+		lineAlpha.setSelection(store.getDefaultInt(Settings.LINE_ALPHA));
+		int index = store.getDefaultInt(Settings.LINE_STYLE) - 1;
 		if (index < 0 || index >= styles.length) {
 			index = 0;
 		}
 		lineStyle.setText(styles[index]);
-		lineWidth.setSelection(store.getDefaultInt(Keys.LINE_WIDTH));
-		lineShift.setSelection(store.getDefaultInt(Keys.LINE_SHIFT));
+		lineWidth.setSelection(store.getDefaultInt(Settings.LINE_WIDTH));
+		lineShift.setSelection(store.getDefaultInt(Settings.LINE_SHIFT));
 		colorFieldEditor.loadDefault();
-		drawLeftEnd.setSelection(store.getDefaultBoolean(Keys.DRAW_LEFT_END));
-		drawBlankLine.setSelection(store.getDefaultBoolean(Keys.DRAW_BLANK_LINE));
-		skipCommentBlock.setSelection(store.getDefaultBoolean(Keys.SKIP_COMMENT_BLOCK));
+		drawLeftEnd.setSelection(store.getDefaultBoolean(Settings.DRAW_LEFT_END));
+		drawBlankLine.setSelection(store.getDefaultBoolean(Settings.DRAW_BLANK_LINE));
+		skipCommentBlock.setSelection(store.getDefaultBoolean(Settings.SKIP_COMMENT_BLOCK));
 		enableControls(enabled.getSelection());
 		for (final TreeItem item : contentTypesTree.getItems()) {
 			checkItems(item, false);
 		}
-		final String type = store.getDefaultString(Keys.CONTENT_TYPES);
+		final String type = store.getDefaultString(Settings.CONTENT_TYPES);
 		final String types[] = type.split("\\|");
 		for (final TreeItem child : contentTypesTree.getItems()) {
 			checkContentType(child, types);
@@ -178,43 +178,43 @@ public class SettingsPage extends PreferencePage implements IWorkbenchPreference
 	@Override
 	public boolean performOk() {
 		final IPreferenceStore store = getPreferenceStore();
-		store.setValue(Keys.ENABLED, enabled.getSelection());
-		store.setValue(Keys.LINE_ALPHA, lineAlpha.getSelection());
-		store.setValue(Keys.LINE_STYLE, lineStyle.getSelectionIndex() + 1);
-		store.setValue(Keys.LINE_WIDTH, lineWidth.getSelection());
-		store.setValue(Keys.LINE_SHIFT, lineShift.getSelection());
+		store.setValue(Settings.ENABLED, enabled.getSelection());
+		store.setValue(Settings.LINE_ALPHA, lineAlpha.getSelection());
+		store.setValue(Settings.LINE_STYLE, lineStyle.getSelectionIndex() + 1);
+		store.setValue(Settings.LINE_WIDTH, lineWidth.getSelection());
+		store.setValue(Settings.LINE_SHIFT, lineShift.getSelection());
 		colorFieldEditor.store();
 		final RGB rgb = colorFieldEditor.getColorSelector().getColorValue();
 		final Color color = new Color(PlatformUI.getWorkbench().getDisplay(), rgb);
 		Activator.getDefault().setColor(color);
-		store.setValue(Keys.DRAW_LEFT_END, drawLeftEnd.getSelection());
-		store.setValue(Keys.DRAW_BLANK_LINE, drawBlankLine.getSelection());
-		store.setValue(Keys.SKIP_COMMENT_BLOCK, skipCommentBlock.getSelection());
+		store.setValue(Settings.DRAW_LEFT_END, drawLeftEnd.getSelection());
+		store.setValue(Settings.DRAW_BLANK_LINE, drawBlankLine.getSelection());
+		store.setValue(Settings.SKIP_COMMENT_BLOCK, skipCommentBlock.getSelection());
 		String types = "";
 		for (final TreeItem item : contentTypesTree.getItems()) {
 			types = getContentTypes(item, types);
 		}
-		store.setValue(Keys.CONTENT_TYPES, types);
+		store.setValue(Settings.CONTENT_TYPES, types);
 		return super.performOk();
 	}
 
 	private void loadPreferences() {
 		final IPreferenceStore store = getPreferenceStore();
-		enabled.setSelection(store.getBoolean(Keys.ENABLED));
-		lineAlpha.setSelection(store.getInt(Keys.LINE_ALPHA));
-		int index = store.getInt(Keys.LINE_STYLE) - 1;
+		enabled.setSelection(store.getBoolean(Settings.ENABLED));
+		lineAlpha.setSelection(store.getInt(Settings.LINE_ALPHA));
+		int index = store.getInt(Settings.LINE_STYLE) - 1;
 		if (index < 0 || index >= styles.length) {
 			index = 0;
 		}
 		lineStyle.setText(styles[index]);
-		lineWidth.setSelection(store.getInt(Keys.LINE_WIDTH));
-		lineShift.setSelection(store.getInt(Keys.LINE_SHIFT));
+		lineWidth.setSelection(store.getInt(Settings.LINE_WIDTH));
+		lineShift.setSelection(store.getInt(Settings.LINE_SHIFT));
 		colorFieldEditor.load();
-		drawLeftEnd.setSelection(store.getBoolean(Keys.DRAW_LEFT_END));
-		drawBlankLine.setSelection(store.getBoolean(Keys.DRAW_BLANK_LINE));
-		skipCommentBlock.setSelection(store.getBoolean(Keys.SKIP_COMMENT_BLOCK));
+		drawLeftEnd.setSelection(store.getBoolean(Settings.DRAW_LEFT_END));
+		drawBlankLine.setSelection(store.getBoolean(Settings.DRAW_BLANK_LINE));
+		skipCommentBlock.setSelection(store.getBoolean(Settings.SKIP_COMMENT_BLOCK));
 		enableControls(enabled.getSelection());
-		final String type = store.getString(Keys.CONTENT_TYPES);
+		final String type = store.getString(Settings.CONTENT_TYPES);
 		final String types[] = type.split("\\|");
 		for (final TreeItem child : contentTypesTree.getItems()) {
 			checkContentType(child, types);

@@ -8,7 +8,7 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.eclipse.ui.themes.ColorUtil;
 import org.osgi.framework.BundleContext;
 
-import net.certiv.tools.indentguide.preferences.Keys;
+import net.certiv.tools.indentguide.preferences.Settings;
 
 public class Activator extends AbstractUIPlugin {
 
@@ -22,10 +22,6 @@ public class Activator extends AbstractUIPlugin {
 	/** Returns the shared instance */
 	public static Activator getDefault() {
 		return plugin;
-	}
-
-	public static void log(Throwable e) {
-		getDefault().getLog().log(new Status(IStatus.ERROR, PLUGIN_ID, e.getMessage()));
 	}
 
 	@Override
@@ -46,8 +42,8 @@ public class Activator extends AbstractUIPlugin {
 
 	public Color getColor() {
 		if (color == null) {
-			String colorString = getPreferenceStore().getString(Keys.LINE_COLOR);
-			color = new Color(PlatformUI.getWorkbench().getDisplay(), ColorUtil.getColorValue(colorString));
+			String colorSpec = getPreferenceStore().getString(Settings.LINE_COLOR);
+			color = new Color(PlatformUI.getWorkbench().getDisplay(), ColorUtil.getColorValue(colorSpec));
 		}
 		return color;
 	}
@@ -57,5 +53,13 @@ public class Activator extends AbstractUIPlugin {
 			this.color.dispose();
 		}
 		this.color = color;
+	}
+
+	public static void log(String msg) {
+		plugin.getLog().log(new Status(IStatus.INFO, PLUGIN_ID, msg));
+	}
+
+	public static void log(Throwable e) {
+		plugin.getLog().log(new Status(IStatus.ERROR, PLUGIN_ID, e.getMessage()));
 	}
 }

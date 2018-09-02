@@ -21,6 +21,8 @@ import org.eclipse.jface.text.IPainter;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.ITextViewerExtension5;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.custom.StyledTextContent;
 import org.eclipse.swt.events.PaintEvent;
@@ -30,7 +32,7 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.LineAttributes;
 import org.eclipse.swt.graphics.Point;
 
-import net.certiv.tools.indentguide.preferences.Keys;
+import net.certiv.tools.indentguide.preferences.Settings;
 
 /**
  * A painter for drawing visible indent guide lines.
@@ -39,14 +41,11 @@ import net.certiv.tools.indentguide.preferences.Keys;
  */
 public class IndentGuidePainter implements IPainter, PaintListener {
 
-	/** Indicates whether this painter is active. */
-	private boolean fIsActive = false;
-	/** The source viewer this painter is attached to. */
-	private ITextViewer fTextViewer;
-	/** The viewer's widget. */
-	private StyledText fTextWidget;
-	/** Tells whether the advanced graphics sub system is available. */
-	private final boolean fIsAdvancedGraphicsPresent;
+	private boolean advanced; // is advanced graphics subsystem available
+	private boolean active;	// is painter active
+	private ITextViewer textViewer; // source viewer for this painter
+	private StyledText textWidget;
+	private IPreferenceStore store;
 
 	private int lineAlpha;
 	private int lineStyle;
@@ -57,6 +56,17 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 	private boolean drawBlankLine;
 	private boolean skipCommentBlock;
 
+	private final IPropertyChangeListener propertyWatcher = new IPropertyChangeListener() {
+
+		@Override
+		public void propertyChange(PropertyChangeEvent event) {
+			if (event.getProperty().startsWith(Settings.KEY)) {
+				update();
+				redrawAll();
+			}
+		}
+	};
+
 	/**
 	 * Creates a new painter for the given text viewer.
 	 *
@@ -64,39 +74,36 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 	 */
 	public IndentGuidePainter(ITextViewer textViewer) {
 		super();
-		fTextViewer = textViewer;
-		fTextWidget = textViewer.getTextWidget();
-		GC gc = new GC(fTextWidget);
+		this.textViewer = textViewer;
+		this.textWidget = textViewer.getTextWidget();
+		GC gc = new GC(textWidget);
 		gc.setAdvanced(true);
-		fIsAdvancedGraphicsPresent = gc.getAdvanced();
+		this.advanced = gc.getAdvanced();
 		gc.dispose();
 
-		IPreferenceStore store = Activator.getDefault().getPreferenceStore();
-		lineAlpha = store.getInt(Keys.LINE_ALPHA);
-		lineStyle = store.getInt(Keys.LINE_STYLE);
-		lineWidth = store.getInt(Keys.LINE_WIDTH);
-		lineShift = store.getInt(Keys.LINE_SHIFT);
-		drawLeftEnd = store.getBoolean(Keys.DRAW_LEFT_END);
-		drawBlankLine = store.getBoolean(Keys.DRAW_BLANK_LINE);
-		skipCommentBlock = store.getBoolean(Keys.SKIP_COMMENT_BLOCK);
+		store = Activator.getDefault().getPreferenceStore();
+		store.addPropertyChangeListener(propertyWatcher);
+		update();
 	}
 
 	@Override
 	public void dispose() {
-		fTextViewer = null;
-		fTextWidget = null;
+		store.removePropertyChangeListener(propertyWatcher);
+		store = null;
+		textViewer = null;
+		textWidget = null;
 	}
 
 	@Override
 	public void paint(int reason) {
-		IDocument document = fTextViewer.getDocument();
+		IDocument document = textViewer.getDocument();
 		if (document == null) {
 			deactivate(false);
 			return;
 		}
-		if (!fIsActive) {
-			fIsActive = true;
-			fTextWidget.addPaintListener(this);
+		if (!active) {
+			active = true;
+			textWidget.addPaintListener(this);
 			redrawAll();
 
 		} else if (reason == CONFIGURATION || reason == INTERNAL) {
@@ -105,12 +112,12 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 		} else if (reason == TEXT_CHANGE) { // redraw current line only
 			try {
 				IRegion lineRegion = document
-						.getLineInformationOfOffset(getDocumentOffset(fTextWidget.getCaretOffset()));
+						.getLineInformationOfOffset(getDocumentOffset(textWidget.getCaretOffset()));
 				int widgetOffset = getWidgetOffset(lineRegion.getOffset());
-				int charCount = fTextWidget.getCharCount();
+				int charCount = textWidget.getCharCount();
 				int redrawLength = Math.min(lineRegion.getLength(), charCount - widgetOffset);
 				if (widgetOffset >= 0 && redrawLength > 0) {
-					fTextWidget.redrawRange(widgetOffset, redrawLength, true);
+					textWidget.redrawRange(widgetOffset, redrawLength, true);
 				}
 			} catch (BadLocationException e) {}
 		}
@@ -118,9 +125,9 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 
 	@Override
 	public void deactivate(boolean redraw) {
-		if (fIsActive) {
-			fIsActive = false;
-			fTextWidget.removePaintListener(this);
+		if (active) {
+			active = false;
+			textWidget.removePaintListener(this);
 			if (redraw) redrawAll();
 		}
 	}
@@ -130,23 +137,33 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 
 	@Override
 	public void paintControl(PaintEvent event) {
-		if (fTextWidget != null) {
+		if (textWidget != null) {
 			handleDrawRequest(event.gc, event.x, event.y, event.width, event.height);
 		}
 	}
 
+	private void update() {
+		lineAlpha = store.getInt(Settings.LINE_ALPHA);
+		lineStyle = store.getInt(Settings.LINE_STYLE);
+		lineWidth = store.getInt(Settings.LINE_WIDTH);
+		lineShift = store.getInt(Settings.LINE_SHIFT);
+		drawLeftEnd = store.getBoolean(Settings.DRAW_LEFT_END);
+		drawBlankLine = store.getBoolean(Settings.DRAW_BLANK_LINE);
+		skipCommentBlock = store.getBoolean(Settings.SKIP_COMMENT_BLOCK);
+	}
+
 	// Draw characters in view range.
 	private void handleDrawRequest(GC gc, int x, int y, int w, int h) {
-		int startLine = fTextWidget.getLineIndex(y);
-		int endLine = fTextWidget.getLineIndex(y + h - 1);
-		if (startLine <= endLine && startLine < fTextWidget.getLineCount()) {
+		int startLine = textWidget.getLineIndex(y);
+		int endLine = textWidget.getLineIndex(y + h - 1);
+		if (startLine <= endLine && startLine < textWidget.getLineCount()) {
 			Color fgColor = gc.getForeground();
 			LineAttributes lineAttributes = gc.getLineAttributes();
 			gc.setForeground(Activator.getDefault().getColor());
 			gc.setLineStyle(lineStyle);
 			gc.setLineWidth(lineWidth);
 			spaceWidth = gc.getAdvanceWidth(' ');
-			if (fIsAdvancedGraphicsPresent) {
+			if (advanced) {
 				int alpha = gc.getAlpha();
 				gc.setAlpha(this.lineAlpha);
 				drawLineRange(gc, startLine, endLine, x, w);
@@ -169,13 +186,13 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 	 * @param w the width of the drawing range
 	 */
 	private void drawLineRange(GC gc, int startLine, int endLine, int x, int w) {
-		int tabs = fTextWidget.getTabs();
+		int tabs = textWidget.getTabs();
 
-		StyledTextContent content = fTextWidget.getContent();
+		StyledTextContent content = textWidget.getContent();
 		for (int line = startLine; line <= endLine; line++) {
-			int widgetOffset = fTextWidget.getOffsetAtLine(line);
+			int widgetOffset = textWidget.getOffsetAtLine(line);
 			if (!isFoldedLine(content.getLineAtOffset(widgetOffset))) {
-				String text = fTextWidget.getLine(line);
+				String text = textWidget.getLine(line);
 				int extend = 0;
 				if (skipCommentBlock && assumeCommentBlock(text, tabs)) {
 					extend -= tabs;
@@ -183,12 +200,12 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 				if (drawBlankLine && text.trim().length() == 0) {
 					int prevLine = line;
 					while (--prevLine >= 0) {
-						text = fTextWidget.getLine(prevLine);
+						text = textWidget.getLine(prevLine);
 						if (text.trim().length() > 0) {
 							int postLine = line;
-							int lineCount = fTextWidget.getLineCount();
+							int lineCount = textWidget.getLineCount();
 							while (++postLine < lineCount) {
-								String tmp = fTextWidget.getLine(postLine);
+								String tmp = textWidget.getLine(postLine);
 								if (tmp.trim().length() > 0) {
 									if (countSpaces(text, tabs) < countSpaces(tmp, tabs)) {
 										extend += tabs;
@@ -258,8 +275,8 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 	 * @return <code>true</code> if the line is folded
 	 */
 	private boolean isFoldedLine(int widgetLine) {
-		if (fTextViewer instanceof ITextViewerExtension5) {
-			ITextViewerExtension5 extension = (ITextViewerExtension5) fTextViewer;
+		if (textViewer instanceof ITextViewerExtension5) {
+			ITextViewerExtension5 extension = (ITextViewerExtension5) textViewer;
 			int modelLine = extension.widgetLine2ModelLine(widgetLine);
 			int widgetLine2 = extension.modelLine2WidgetLine(modelLine + 1);
 			return widgetLine2 == -1;
@@ -271,7 +288,7 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 	 * Redraw all of the text widgets visible content.
 	 */
 	private void redrawAll() {
-		fTextWidget.redraw();
+		textWidget.redraw();
 	}
 
 	/**
@@ -280,9 +297,9 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 	 * @param column
 	 */
 	private void draw(GC gc, int offset, int column) {
-		Point pos = fTextWidget.getLocationAtOffset(offset);
+		Point pos = textWidget.getLocationAtOffset(offset);
 		pos.x += column * spaceWidth + lineShift;
-		gc.drawLine(pos.x, pos.y, pos.x, pos.y + fTextWidget.getLineHeight(offset));
+		gc.drawLine(pos.x, pos.y, pos.x, pos.y + textWidget.getLineHeight(offset));
 	}
 
 	/**
@@ -292,11 +309,11 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 	 * @return widget offset
 	 */
 	private int getWidgetOffset(int documentOffset) {
-		if (fTextViewer instanceof ITextViewerExtension5) {
-			ITextViewerExtension5 extension = (ITextViewerExtension5) fTextViewer;
+		if (textViewer instanceof ITextViewerExtension5) {
+			ITextViewerExtension5 extension = (ITextViewerExtension5) textViewer;
 			return extension.modelOffset2WidgetOffset(documentOffset);
 		}
-		IRegion visible = fTextViewer.getVisibleRegion();
+		IRegion visible = textViewer.getVisibleRegion();
 		int widgetOffset = documentOffset - visible.getOffset();
 		if (widgetOffset > visible.getLength()) {
 			return -1;
@@ -311,11 +328,11 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 	 * @return document offset
 	 */
 	private int getDocumentOffset(int widgetOffset) {
-		if (fTextViewer instanceof ITextViewerExtension5) {
-			ITextViewerExtension5 extension = (ITextViewerExtension5) fTextViewer;
+		if (textViewer instanceof ITextViewerExtension5) {
+			ITextViewerExtension5 extension = (ITextViewerExtension5) textViewer;
 			return extension.widgetOffset2ModelOffset(widgetOffset);
 		}
-		IRegion visible = fTextViewer.getVisibleRegion();
+		IRegion visible = textViewer.getVisibleRegion();
 		if (widgetOffset > visible.getLength()) {
 			return -1;
 		}
