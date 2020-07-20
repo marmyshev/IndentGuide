@@ -267,7 +267,7 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 	 * Check if the given widget line is a folded line.
 	 *
 	 * @param widgetLine the widget line number
-	 * @return <code>true</code> if the line is folded
+	 * @return {@code true} if the line is folded
 	 */
 	private boolean isFoldedLine(int widgetLine) {
 		if (textViewer instanceof ITextViewerExtension5) {

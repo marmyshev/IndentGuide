@@ -10,17 +10,29 @@
             name="Indent Guide">
       </page>
    </extension>
+   
    <extension
          point="org.eclipse.core.runtime.preferences">
       <initializer
             class="net.certiv.tools.indentguide.preferences.Initializer">
       </initializer>
    </extension>
+   
    <extension
          point="org.eclipse.ui.startup">
       <startup
             class="net.certiv.tools.indentguide.Starter">
       </startup>
+   </extension>
+   
+   <extension
+         point="org.eclipse.e4.ui.css.swt.theme">
+      <stylesheet
+            uri="css/dark.css">
+         <themeid
+               refid="org.eclipse.e4.ui.css.theme.e4_dark">
+         </themeid>
+      </stylesheet>
    </extension>
 
 </plugin>

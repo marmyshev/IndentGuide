@@ -7,8 +7,8 @@
 	<packaging>pom</packaging>
 
 	<groupId>net.certiv</groupId>
-	<artifactId>IndentGuide</artifactId>
-	<version>1.5.0-SNAPSHOT</version>
+	<artifactId>net.certiv.tools.indentguide.parent</artifactId>
+	<version>1.6.0-SNAPSHOT</version>
 
 	<name>IndentGuide</name>
 	<description>IndentGuide</description>
@@ -19,28 +19,28 @@
 	</organization>
 
 	<prerequisites>
-		<maven>3.3.3</maven>
+		<maven>3.6</maven>
 	</prerequisites>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<tycho.version>1.2.0</tycho.version>
-		<tycho-extras.version>1.2.0</tycho-extras.version>
 		<java.version>1.8</java.version>
+		<tycho.version>1.4.0</tycho.version>
+		<eclipse-repo.url>http://download.eclipse.org/releases/2020-03</eclipse-repo.url>
 	</properties>
 
 	<modules>
-		<module>plugin</module>
-		<module>feature</module>
-		<module>site</module>
+		<module>net.certiv.tools.indentguide.plugin</module>
+		<module>net.certiv.tools.indentguide.feature</module>
+		<module>net.certiv.tools.indentguide.site</module>
 	</modules>
 
 	<repositories>
 		<repository>
-			<id>photon</id>
+			<id>eclipse</id>
 			<layout>p2</layout>
-			<url>http://download.eclipse.org/releases/photon</url>
+			<url>${eclipse-repo.url}</url>
 		</repository>
 	</repositories>
 
@@ -57,6 +57,7 @@
 					<target>${java.version}</target>
 				</configuration>
 			</plugin>
+
 			<plugin>
 				<groupId>org.eclipse.tycho</groupId>
 				<artifactId>target-platform-configuration</artifactId>
@@ -64,23 +65,13 @@
 				<configuration>
 					<environments>
 						<environment>
-							<os>linux</os>
-							<ws>gtk</ws>
-							<arch>x86</arch>
-						</environment>
-						<environment>
-							<os>linux</os>
-							<ws>gtk</ws>
+							<os>win32</os>
+							<ws>win32</ws>
 							<arch>x86_64</arch>
 						</environment>
 						<environment>
-							<os>win32</os>
-							<ws>win32</ws>
-							<arch>x86</arch>
-						</environment>
-						<environment>
-							<os>win32</os>
-							<ws>win32</ws>
+							<os>linux</os>
+							<ws>gtk</ws>
 							<arch>x86_64</arch>
 						</environment>
 						<environment>
