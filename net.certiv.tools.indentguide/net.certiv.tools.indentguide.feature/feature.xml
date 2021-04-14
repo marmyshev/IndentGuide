@@ -2,7 +2,7 @@
 <feature
       id="net.certiv.tools.indentguide.feature"
       label="IndentGuide"
-      version="1.6.0.qualifier"
+      version="1.6.2.qualifier"
       provider-name="Certiv Analytis">
 
    <description>
@@ -49,7 +49,6 @@ SOFTWARE.
          id="net.certiv.tools.indentguide"
          download-size="0"
          install-size="0"
-         version="0.0.0"
-         unpack="false"/>
+         version="0.0.0"/>
 
 </feature>

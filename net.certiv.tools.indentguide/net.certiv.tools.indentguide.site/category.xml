@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/net.certiv.tools.indentguide.feature_1.6.0.qualifier.jar" id="net.certiv.tools.indentguide.feature" version="1.6.0.qualifier">
+   <feature id="net.certiv.tools.indentguide.feature">
       <category name="net.certiv"/>
    </feature>
    <category-def name="net.certiv" label="Certiv Tools"/>

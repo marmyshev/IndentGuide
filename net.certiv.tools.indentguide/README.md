@@ -5,8 +5,8 @@
 Adds configurable indent guide lines in Eclipse text editors.
 
 <figure>
-<figcaption><u>Example</u></figcaption>
-[![Example][1]][1]
+<figcaption><u>IndentGuide Example</u></figcaption>
+<img src="Screenshot.png">
 </figure>
 
 ### Preferences
@@ -17,12 +17,8 @@ The preference page can be found at
 
 <figure>
 <figcaption><u>IndentGuide Preference Page</u></figcaption>
-[![IndentGuide Preference Page][2]][2]
+<img src="Settings.png">
 </figure>
-
-[1]: http://www.certiv.net/updates/net.certiv.indentguide.site/Screenshot.png "Example" 
-[2]: http://www.certiv.net/updates/net.certiv.indentguide.site/Settings.png "IndentGuide Preference Page" 
-
 
 ### Update Site
 
@@ -32,9 +28,7 @@ https://www.certiv.net/updates
 
 MIT
 
-### Authors
-
-The IndentGuide Authors
+### The IndentGuide Authors
 
 - IBM Corporation
 - Anton Leherbauer (Wind River Systems)
