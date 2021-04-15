@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2006-2018 The IndentGuide Authors.
+ * Copyright (c) 2006-2021 The IndentGuide Authors.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under the
@@ -17,7 +17,6 @@ import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.ITextViewerExtension5;
 import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.custom.StyledTextContent;
 import org.eclipse.swt.events.PaintEvent;
@@ -51,14 +50,10 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 	private boolean drawBlankLine;
 	private boolean skipCommentBlock;
 
-	private final IPropertyChangeListener propertyWatcher = new IPropertyChangeListener() {
-
-		@Override
-		public void propertyChange(PropertyChangeEvent event) {
-			if (event.getProperty().startsWith(Settings.KEY)) {
-				update();
-				redrawAll();
-			}
+	private final IPropertyChangeListener propertyWatcher = event -> {
+		if (event.getProperty().startsWith(Settings.KEY)) {
+			update();
+			redrawAll();
 		}
 	};
 
@@ -70,10 +65,10 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 	public IndentGuidePainter(ITextViewer textViewer) {
 		super();
 		this.textViewer = textViewer;
-		this.textWidget = textViewer.getTextWidget();
+		textWidget = textViewer.getTextWidget();
 		GC gc = new GC(textWidget);
 		gc.setAdvanced(true);
-		this.advanced = gc.getAdvanced();
+		advanced = gc.getAdvanced();
 		gc.dispose();
 
 		store = Activator.getDefault().getPreferenceStore();
@@ -160,7 +155,7 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 			spaceWidth = gc.getAdvanceWidth(' ');
 			if (advanced) {
 				int alpha = gc.getAlpha();
-				gc.setAlpha(this.lineAlpha);
+				gc.setAlpha(lineAlpha);
 				drawLineRange(gc, startLine, endLine, x, w);
 				gc.setAlpha(alpha);
 			} else {

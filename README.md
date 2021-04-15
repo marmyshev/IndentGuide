@@ -5,8 +5,7 @@
 Adds configurable indent guide lines in Eclipse text editors.
 
 <figure>
-<figcaption><u>IndentGuide Example</u></figcaption>
-<img src="Screenshot.png">
+<img src="Screenshot.png" alt="IndentGuide Example">
 </figure>
 
 ### Preferences
@@ -16,12 +15,12 @@ The preference page can be found at
 > **`Window`&rarr;`General`&rarr;`Editors`&rarr;`Text Editors`&rarr;`Indent Guide`**
 
 <figure>
-<figcaption><u>IndentGuide Preference Page</u></figcaption>
-<img src="Settings.png">
+	<img src="Settings.png" style="border:1px solid black" alt="IndentGuide Preference Page">
 </figure>
 
 ### Update Site
 
+Certiv Tools<br>
 https://www.certiv.net/updates
 
 ### License

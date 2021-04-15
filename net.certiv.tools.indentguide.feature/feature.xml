@@ -2,17 +2,22 @@
 <feature
       id="net.certiv.tools.indentguide.feature"
       label="IndentGuide"
-      version="1.6.2.qualifier"
+      version="1.6.3.qualifier"
       provider-name="Certiv Analytis">
 
    <description>
-      IndentGuide
+      IndentGuide adds configurable indent guide lines in Eclipse text editors.
    </description>
+
+   <copyright>
+      Copyright (c) 2006-2018 The IndentGuide Authors.
+All rights reserved.
+   </copyright>
 
    <license url="">
       The MIT License (MIT)
 
-Copyright (c) 2006-2019 the IndentGuide Authors.
+Copyright (c) 2006-2021 the IndentGuide Authors.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the &quot;Software&quot;), to deal

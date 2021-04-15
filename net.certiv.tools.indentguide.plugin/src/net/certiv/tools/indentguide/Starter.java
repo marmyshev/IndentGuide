@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2006-2018 The IndentGuide Authors.
+ * Copyright (c) 2006-2021 The IndentGuide Authors.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under the
@@ -41,12 +41,9 @@ public class Starter implements IStartup {
 
 	@Override
 	public void earlyStartup() {
-		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
-
-			@Override
-			public void run() {
-				IWorkbench workbench = PlatformUI.getWorkbench();
-				IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
+		PlatformUI.getWorkbench().getDisplay().asyncExec(() -> {
+			IWorkbench workbench = PlatformUI.getWorkbench();
+			for (IWorkbenchWindow window : workbench.getWorkbenchWindows()) {
 				if (window != null) {
 					IWorkbenchPage page = window.getActivePage();
 					if (page != null) {
@@ -57,47 +54,45 @@ public class Starter implements IStartup {
 					}
 					window.getPartService().addPartListener(new PartWatcher());
 				}
-				workbench.addWindowListener(new WindowWatcher());
 			}
+			workbench.addWindowListener(new WindowWatcher());
 		});
 	}
 
 	private void addListener(IEditorPart part) {
 		IPreferenceStore store = Activator.getDefault().getPreferenceStore();
-		if (store.getBoolean(Settings.ENABLED)) {
-			if (part instanceof AbstractTextEditor) {
-				IContentType contentType = null;
-				ITextEditor textEditor = (ITextEditor) part;
-				IDocumentProvider provider = textEditor.getDocumentProvider();
-				if (provider instanceof IDocumentProviderExtension4) {
-					IDocumentProviderExtension4 provider4 = (IDocumentProviderExtension4) provider;
-					try {
-						contentType = provider4.getContentType(textEditor.getEditorInput());
-					} catch (CoreException e) {}
-				}
-				if (contentType == null) return;
-
-				String id = contentType.getId();
-				String typeSpec = store.getString(Settings.CONTENT_TYPES);
-				String[] types = typeSpec.split("\\|");
-				List<String> contentTypes = Arrays.asList(types);
-				if (!contentTypes.contains(id)) return;
-
-				Class<?> editor = part.getClass();
-				while (!editor.equals(AbstractTextEditor.class)) {
-					editor = editor.getSuperclass();
-				}
+		if (store.getBoolean(Settings.ENABLED) && (part instanceof AbstractTextEditor)) {
+			IContentType contentType = null;
+			ITextEditor textEditor = (ITextEditor) part;
+			IDocumentProvider provider = textEditor.getDocumentProvider();
+			if (provider instanceof IDocumentProviderExtension4) {
+				IDocumentProviderExtension4 provider4 = (IDocumentProviderExtension4) provider;
 				try {
-					Method method = editor.getDeclaredMethod("getSourceViewer", (Class[]) null); // $NON-NLS-1$
-					method.setAccessible(true);
-					Object viewer = method.invoke(part, (Object[]) null);
-					if (viewer instanceof ITextViewerExtension2) {
-						painter = new IndentGuidePainter((ITextViewer) viewer);
-						((ITextViewerExtension2) viewer).addPainter(painter);
-					}
-				} catch (Exception e) {
-					Activator.log(e);
+					contentType = provider4.getContentType(textEditor.getEditorInput());
+				} catch (CoreException e) {}
+			}
+			if (contentType == null) return;
+
+			String id = contentType.getId();
+			String typeSpec = store.getString(Settings.CONTENT_TYPES);
+			String[] types = typeSpec.split("\\|");
+			List<String> contentTypes = Arrays.asList(types);
+			if (!contentTypes.contains(id)) return;
+
+			Class<?> editor = part.getClass();
+			while (!editor.equals(AbstractTextEditor.class)) {
+				editor = editor.getSuperclass();
+			}
+			try {
+				Method method = editor.getDeclaredMethod("getSourceViewer", (Class[]) null); // $NON-NLS-1$
+				method.setAccessible(true);
+				Object viewer = method.invoke(part, (Object[]) null);
+				if (viewer instanceof ITextViewerExtension2) {
+					painter = new IndentGuidePainter((ITextViewer) viewer);
+					((ITextViewerExtension2) viewer).addPainter(painter);
 				}
+			} catch (Exception e) {
+				Activator.log(e);
 			}
 		}
 	}
