@@ -20,6 +20,10 @@ import net.certiv.tools.indentguide.Activator;
 /** Initialize default preference values. */
 public class Initializer extends AbstractPreferenceInitializer {
 
+	private static final String BLACK = "0,0,0"; // $NON-NLS-1$
+	private static final String LIGHT = "192,192,192"; // $NON-NLS-1$
+	private static final String PIPE = "|"; // $NON-NLS-1$
+
 	@Override
 	public void initializeDefaultPreferences() {
 		IPreferenceStore store = Activator.getDefault().getPreferenceStore();
@@ -28,7 +32,8 @@ public class Initializer extends AbstractPreferenceInitializer {
 		store.setDefault(Settings.LINE_STYLE, SWT.LINE_SOLID);
 		store.setDefault(Settings.LINE_WIDTH, 1);
 		store.setDefault(Settings.LINE_SHIFT, 2);
-		store.setDefault(Settings.LINE_COLOR, "0,0,0"); //$NON-NLS-1$
+		store.setDefault(Settings.LINE_COLOR, BLACK);
+		store.setDefault(Settings.LINE_COLOR + Settings.DARK, LIGHT);
 		store.setDefault(Settings.DRAW_LEFT_END, false);
 		store.setDefault(Settings.DRAW_BLANK_LINE, true);
 		store.setDefault(Settings.SKIP_COMMENT_BLOCK, false);
@@ -38,7 +43,7 @@ public class Initializer extends AbstractPreferenceInitializer {
 		StringBuilder sb = new StringBuilder();
 		for (IContentType type : mgr.getAllContentTypes()) {
 			if (type.isKindOf(textType)) {
-				sb.append(type.getId() + "|");
+				sb.append(type.getId() + PIPE);
 			}
 		}
 		sb.setLength(sb.length() - 1);

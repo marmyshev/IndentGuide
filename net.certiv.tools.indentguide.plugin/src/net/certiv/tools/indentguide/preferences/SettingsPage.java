@@ -107,7 +107,8 @@ public class SettingsPage extends PreferencePage implements IWorkbenchPreference
 		lineShift = new Spinner(attributes, SWT.BORDER);
 		lineShift.setMinimum(0);
 		lineShift.setMaximum(8);
-		colorFieldEditor = new ColorFieldEditor(Settings.LINE_COLOR, SettingsMessages.Settings_color_label,
+
+		colorFieldEditor = new ColorFieldEditor(colorKey(), SettingsMessages.Settings_color_label,
 				attributes);
 		colorFieldEditor.setPreferenceStore(getPreferenceStore());
 
@@ -155,6 +156,14 @@ public class SettingsPage extends PreferencePage implements IWorkbenchPreference
 		loadPreferences();
 
 		return composite;
+	}
+
+	private String colorKey() {
+		String key = Settings.LINE_COLOR;
+		if (Activator.getDefault().isDarkTheme()) {
+			key += Settings.DARK;
+		}
+		return key;
 	}
 
 	@Override
