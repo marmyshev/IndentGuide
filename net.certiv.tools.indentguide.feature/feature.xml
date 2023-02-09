@@ -2,7 +2,7 @@
 <feature
       id="net.certiv.tools.indentguide.feature"
       label="IndentGuide"
-      version="1.7.0.qualifier"
+      version="1.8.0.qualifier"
       provider-name="Certiv Analytis">
 
    <description>
@@ -10,14 +10,14 @@
    </description>
 
    <copyright>
-      Copyright (c) 2006-2018 The IndentGuide Authors.
+      Copyright (c) 2006-2023 The IndentGuide Authors.
 All rights reserved.
    </copyright>
 
    <license url="">
       The MIT License (MIT)
 
-Copyright (c) 2006-2021 the IndentGuide Authors.
+Copyright (c) 2006-2023 the IndentGuide Authors.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the &quot;Software&quot;), to deal
@@ -39,21 +39,25 @@ SOFTWARE.
    </license>
 
    <url>
-      <update label="Certiv Tools" url="https://www.certiv.net/update"/>
+      <update label="Certiv Tools" url="https://www.certiv.net/updates"/>
    </url>
 
    <requires>
-      <import plugin="org.eclipse.ui" version="3.109.100" match="compatible"/>
-      <import plugin="org.eclipse.core.runtime" version="3.14.0" match="compatible"/>
-      <import plugin="org.eclipse.jface.text" version="3.13.0" match="compatible"/>
-      <import plugin="org.eclipse.ui.workbench.texteditor" version="3.11.0" match="compatible"/>
-      <import plugin="org.eclipse.e4.ui.css.swt.theme"/>
+      <import plugin="org.eclipse.ui" version="3.201.200" match="compatible"/>
+      <import plugin="org.eclipse.core.runtime" version="3.26.100" match="compatible"/>
+      <import plugin="org.eclipse.jface.text" version="3.22.0" match="compatible"/>
+      <import plugin="org.eclipse.ui.workbench.texteditor" version="3.16.600" match="compatible"/>
+      <import plugin="org.eclipse.e4.core.services" version="2.3.400" match="compatible"/>
+      <import plugin="org.eclipse.e4.ui.css.swt.theme" version="0.13.200" match="compatible"/>
+      <import plugin="org.eclipse.osgi.services" version="3.11.100" match="compatible"/>
+      <import plugin="org.eclipse.ui.forms" version="3.11.500" match="compatible"/>
    </requires>
 
    <plugin
          id="net.certiv.tools.indentguide"
          download-size="0"
          install-size="0"
-         version="0.0.0"/>
+         version="0.0.0"
+         unpack="false"/>
 
 </feature>

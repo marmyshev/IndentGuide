@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2006-2021 The IndentGuide Authors.
+ * Copyright (c) 2006-2023 The IndentGuide Authors.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under the
@@ -11,8 +11,8 @@ package net.certiv.tools.indentguide.preferences;
 /** Constant definitions for plug-in preferences */
 public class Settings {
 
-	public static final String KEY = "indentguide.";
-	public static final String DARK = ".dark";
+	public static final String KEY = "indentguide."; //$NON-NLS-1$
+	public static final String DARK = ".dark"; //$NON-NLS-1$
 
 	public static final String ENABLED = KEY + "enabled"; //$NON-NLS-1$
 

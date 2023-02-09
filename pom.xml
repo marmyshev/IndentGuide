@@ -1,49 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	
 	<modelVersion>4.0.0</modelVersion>
 	<packaging>pom</packaging>
-
+	
 	<groupId>net.certiv</groupId>
 	<artifactId>net.certiv.tools.indentguide.parent</artifactId>
-	<version>1.7.0-SNAPSHOT</version>
-
+	<version>1.8.0-SNAPSHOT</version>
 	<name>IndentGuide</name>
 	<description>IndentGuide</description>
-
+	
 	<organization>
 		<name>Certiv Analytics</name>
 		<url>http://www.certiv.net/</url>
 	</organization>
-
-	<prerequisites>
-		<maven>3.6</maven>
-	</prerequisites>
-
+	
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<java.version>11</java.version>
-		<tycho.version>2.0.0</tycho.version>
-		<eclipse-repo.url>http://download.eclipse.org/releases/2021-09</eclipse-repo.url>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
+		<tycho.version>3.0.1</tycho.version>
+		<eclipse.repo.url>http://download.eclipse.org/releases/latest</eclipse.repo.url>
 	</properties>
-
+	
 	<modules>
 		<module>net.certiv.tools.indentguide.plugin</module>
 		<module>net.certiv.tools.indentguide.feature</module>
 		<module>net.certiv.tools.indentguide.site</module>
 	</modules>
-
+	
 	<repositories>
 		<repository>
 			<id>eclipse</id>
 			<layout>p2</layout>
-			<url>${eclipse-repo.url}</url>
+			<url>${eclipse.repo.url}</url>
 		</repository>
 	</repositories>
-
+	
 	<build>
 		<plugins>
 			<plugin>
@@ -51,13 +46,14 @@
 				<artifactId>tycho-maven-plugin</artifactId>
 				<version>${tycho.version}</version>
 				<extensions>true</extensions>
-				<configuration>
-					<encoding>UTF-8</encoding>
-					<source>${java.version}</source>
-					<target>${java.version}</target>
-				</configuration>
 			</plugin>
-
+	
+			<plugin>
+				<groupId>org.eclipse.tycho</groupId>
+				<artifactId>tycho-versions-plugin</artifactId>
+				<version>${tycho.version}</version>
+			</plugin>
+	
 			<plugin>
 				<groupId>org.eclipse.tycho</groupId>
 				<artifactId>target-platform-configuration</artifactId>
@@ -82,9 +78,8 @@
 					</environments>
 				</configuration>
 			</plugin>
-
 		</plugins>
-
+	
 		<pluginManagement>
 			<plugins>
 				<plugin>
@@ -100,6 +95,5 @@
 				</plugin>
 			</plugins>
 		</pluginManagement>
-
 	</build>
 </project>

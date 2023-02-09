@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2006-2021 The IndentGuide Authors.
+ * Copyright (c) 2006-2023 The IndentGuide Authors.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under the
@@ -108,8 +108,7 @@ public class SettingsPage extends PreferencePage implements IWorkbenchPreference
 		lineShift.setMinimum(0);
 		lineShift.setMaximum(8);
 
-		colorFieldEditor = new ColorFieldEditor(colorKey(), SettingsMessages.Settings_color_label,
-				attributes);
+		colorFieldEditor = new ColorFieldEditor(colorKey(), SettingsMessages.Settings_color_label, attributes);
 		colorFieldEditor.setPreferenceStore(getPreferenceStore());
 
 		final Group group2 = new Group(composite, SWT.NONE);
@@ -173,9 +172,7 @@ public class SettingsPage extends PreferencePage implements IWorkbenchPreference
 		enabled.setSelection(store.getDefaultBoolean(Settings.ENABLED));
 		lineAlpha.setSelection(store.getDefaultInt(Settings.LINE_ALPHA));
 		int index = store.getDefaultInt(Settings.LINE_STYLE) - 1;
-		if (index < 0 || index >= styles.length) {
-			index = 0;
-		}
+		if (index < 0 || index >= styles.length) index = 0;
 		lineStyle.setText(styles[index]);
 		lineWidth.setSelection(store.getDefaultInt(Settings.LINE_WIDTH));
 		lineShift.setSelection(store.getDefaultInt(Settings.LINE_SHIFT));

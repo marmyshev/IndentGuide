@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2006-2021 The IndentGuide Authors.
+ * Copyright (c) 2006-2023 The IndentGuide Authors.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under the
@@ -39,7 +39,7 @@ public class Activator extends AbstractUIPlugin {
 	private static Activator plugin;
 
 	private final IEclipsePreferences[] scopes = new IEclipsePreferences[2];
-	private final EventHandler themeEventHandler = event -> {
+	private final EventHandler themeChange = event -> {
 		disposeLineColor();
 		log("Theme change '%s'", event);
 	};
@@ -51,14 +51,14 @@ public class Activator extends AbstractUIPlugin {
 	}
 
 	/** Returns the shared instance */
-	public static Activator getDefault() {
-		return plugin;
-	}
+	public static Activator getDefault() { return plugin; }
 
 	@Override
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
 		plugin = this;
+
+		log("Indent guide: startup");
 
 		scopes[0] = InstanceScope.INSTANCE.getNode(EditorsID);
 		scopes[1] = DefaultScope.INSTANCE.getNode(EditorsID);
@@ -66,7 +66,7 @@ public class Activator extends AbstractUIPlugin {
 		IWorkbench wb = PlatformUI.getWorkbench();
 		IEventBroker broker = wb.getService(IEventBroker.class);
 		if (broker != null) {
-			broker.subscribe(IThemeEngine.Events.THEME_CHANGED, themeEventHandler);
+			broker.subscribe(IThemeEngine.Events.THEME_CHANGED, themeChange);
 		}
 	}
 
@@ -75,12 +75,11 @@ public class Activator extends AbstractUIPlugin {
 		IWorkbench wb = PlatformUI.getWorkbench();
 		IEventBroker broker = wb.getService(IEventBroker.class);
 		if (broker != null) {
-			broker.unsubscribe(themeEventHandler);
+			broker.unsubscribe(themeChange);
 		}
 
 		disposeLineColor();
 		scopes[0] = scopes[1] = null;
-
 		plugin = null;
 		super.stop(context);
 	}
@@ -99,9 +98,8 @@ public class Activator extends AbstractUIPlugin {
 	}
 
 	/**
-	 * Returns {@code true} if the current theme is 'dark', defined as where the
-	 * foreground color is relatively darker than the background color. (black ->
-	 * '0'; white -> '255*3')
+	 * Returns {@code true} if the current theme is 'dark', defined as where the foreground color is
+	 * relatively darker than the background color. (black -> '0'; white -> '255*3')
 	 */
 	public boolean isDarkTheme() {
 		RGB fg = getRawRGB(AbstractTextEditor.PREFERENCE_COLOR_FOREGROUND);

@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2006-2021 The IndentGuide Authors.
+ * Copyright (c) 2006-2023 The IndentGuide Authors.
  * All rights reserved.
  *
  * This program and the accompanying materials are made available under the
@@ -8,10 +8,12 @@
  *****************************************************************************/
 package net.certiv.tools.indentguide.util;
 
+import org.eclipse.jface.dialogs.IPageChangedListener;
+import org.eclipse.jface.dialogs.PageChangedEvent;
 import org.eclipse.ui.IPartListener2;
 import org.eclipse.ui.IWorkbenchPartReference;
 
-public class PartAdaptor implements IPartListener2 {
+public class PartAdaptor implements IPartListener2, IPageChangedListener {
 
 	@Override
 	public void partOpened(IWorkbenchPartReference partRef) {}
@@ -36,4 +38,7 @@ public class PartAdaptor implements IPartListener2 {
 
 	@Override
 	public void partInputChanged(IWorkbenchPartReference partRef) {}
+
+	@Override
+	public void pageChanged(PageChangedEvent event) {}
 }
