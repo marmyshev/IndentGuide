@@ -40,7 +40,10 @@ import net.certiv.tools.indentguide.preferences.Settings;
 public class IndentGuidePainter implements IPainter, PaintListener {
 
 	private static final Pattern COMMENT_LEAD = Pattern.compile("^ \\*([ \\t].*|/.*|)$"); // $NON-NLS-1$
-	private static final String SPACE = " "; //$NON-NLS-1$
+
+	private static final char TAB = '\t'; // $NON-NLS-1$
+	private static final char SPC = ' '; // $NON-NLS-1$
+	private static final String SPACE = " "; // $NON-NLS-1$
 
 	private boolean advanced; // advanced graphics subsystem
 	private boolean active; // painter state
@@ -114,7 +117,8 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 				if (widgetOffset >= 0 && redrawLength > 0) {
 					widget.redrawRange(widgetOffset, redrawLength, true);
 				}
-			} catch (BadLocationException e) {}
+			}
+			catch (BadLocationException e) {}
 		}
 	}
 
@@ -182,7 +186,7 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 	 */
 	private void drawLineRange(GC gc, int begLine, int endLine, int x, int w) {
 		int tabWidth = widget.getTabs();
-		int spaceWidth = gc.stringExtent(SPACE).x - 1;
+		int spcWidth = Math.max(1, gc.stringExtent(SPACE).x - 1);
 
 		StyledTextContent content = widget.getContent();
 
@@ -216,15 +220,15 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 				}
 				int count = countSpaces(text, tabWidth) + extend;
 				for (int col = drawLeftEnd ? 0 : tabWidth; col < count; col += tabWidth) {
-					draw(gc, offset, col, spaceWidth);
+					draw(gc, offset, col, spcWidth);
 				}
 			}
 		}
 	}
 
-	private void draw(GC gc, int offset, int column, int spaceWidth) {
+	private void draw(GC gc, int offset, int col, int spcWidth) {
 		Point pos = widget.getLocationAtOffset(offset);
-		pos.x += column * spaceWidth + lineShift;
+		pos.x += col * spcWidth + lineShift;
 		gc.drawLine(pos.x, pos.y, pos.x, pos.y + widget.getLineHeight(offset));
 	}
 
@@ -232,10 +236,10 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 		int count = 0;
 		for (int i = 0; i < str.length(); i++) {
 			switch (str.charAt(i)) {
-			case ' ':
+			case SPC:
 				count++;
 				break;
-			case '\t':
+			case TAB:
 				int z = tabs - count % tabs;
 				count += z;
 				break;
@@ -252,10 +256,10 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 		int index = 0;
 		for (int i = 0; i < count; i++) {
 			switch (text.charAt(index)) {
-			case ' ':
+			case SPC:
 				index++;
 				break;
-			case '\t':
+			case TAB:
 				index++;
 				int z = tabs - i % tabs;
 				i += z;
@@ -320,6 +324,7 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 			ITextViewerExtension5 extension = (ITextViewerExtension5) viewer;
 			return extension.widgetOffset2ModelOffset(widgetOffset);
 		}
+
 		IRegion visible = viewer.getVisibleRegion();
 		if (widgetOffset > visible.getLength()) return -1;
 		return widgetOffset + visible.getOffset();

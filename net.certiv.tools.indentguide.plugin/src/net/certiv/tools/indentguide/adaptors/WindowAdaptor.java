@@ -6,7 +6,7 @@
  * terms of the MIT License.  A copy of the MIT License is included this
  * distribution and is available at https://opensource.org/licenses/MIT.
  *****************************************************************************/
-package net.certiv.tools.indentguide.util;
+package net.certiv.tools.indentguide.adaptors;
 
 import org.eclipse.ui.IWindowListener;
 import org.eclipse.ui.IWorkbenchWindow;

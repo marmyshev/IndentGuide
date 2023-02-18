@@ -8,25 +8,23 @@
  *****************************************************************************/
 package net.certiv.tools.indentguide.preferences;
 
-import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.content.IContentType;
-import org.eclipse.core.runtime.content.IContentTypeManager;
 import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.SWT;
 
 import net.certiv.tools.indentguide.Activator;
+import net.certiv.tools.indentguide.util.Prefs;
 
 /** Initialize default preference values. */
 public class Initializer extends AbstractPreferenceInitializer {
 
 	private static final String BLACK = "0,0,0"; // $NON-NLS-1$
 	private static final String LIGHT = "192,192,192"; // $NON-NLS-1$
-	private static final String PIPE = "|"; // $NON-NLS-1$
 
 	@Override
 	public void initializeDefaultPreferences() {
 		IPreferenceStore store = Activator.getDefault().getPreferenceStore();
+
 		store.setDefault(Settings.ENABLED, true);
 		store.setDefault(Settings.LINE_ALPHA, 50);
 		store.setDefault(Settings.LINE_STYLE, SWT.LINE_SOLID);
@@ -36,17 +34,7 @@ public class Initializer extends AbstractPreferenceInitializer {
 		store.setDefault(Settings.LINE_COLOR + Settings.DARK, LIGHT);
 		store.setDefault(Settings.DRAW_LEFT_END, false);
 		store.setDefault(Settings.DRAW_BLANK_LINE, true);
-		store.setDefault(Settings.SKIP_COMMENT_BLOCK, false);
-
-		IContentTypeManager mgr = Platform.getContentTypeManager();
-		IContentType textType = mgr.getContentType(IContentTypeManager.CT_TEXT);
-		StringBuilder sb = new StringBuilder();
-		for (IContentType type : mgr.getAllContentTypes()) {
-			if (type.isKindOf(textType)) {
-				sb.append(type.getId() + PIPE);
-			}
-		}
-		sb.setLength(sb.length() - 1);
-		store.setDefault(Settings.CONTENT_TYPES, sb.toString());
+		store.setDefault(Settings.SKIP_COMMENT_BLOCK, true);
+		store.setDefault(Settings.CONTENT_TYPES, Prefs.delimited(Prefs.platformTextTypes()));
 	}
 }

@@ -9,9 +9,8 @@
 package net.certiv.tools.indentguide;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -42,23 +41,24 @@ import org.eclipse.ui.texteditor.AbstractTextEditor;
 import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.IDocumentProviderExtension4;
 
+import net.certiv.tools.indentguide.adaptors.PartAdaptor;
+import net.certiv.tools.indentguide.adaptors.WindowAdaptor;
 import net.certiv.tools.indentguide.preferences.Settings;
-import net.certiv.tools.indentguide.util.PartAdaptor;
-import net.certiv.tools.indentguide.util.WindowAdaptor;
+import net.certiv.tools.indentguide.util.Prefs;
+import net.certiv.tools.indentguide.util.Utils;
 
 public class Starter implements IStartup {
 
 	private static final Class<?>[] CLS_TYPE = null;
 	private static final Object[] ARG_TYPE = null;
 
-	private static final String DELIM = "\\|"; // $NON-NLS-1$
 	private static final String UNKNOWN = "Unknown"; // $NON-NLS-1$
 
 	private static final String ACTIVE_EDITOR = "getActiveEditor"; // $NON-NLS-1$
 	private static final String SOURCE_VIEWER = "getSourceViewer"; // $NON-NLS-1$
 
 	private IPreferenceStore store;
-	private HashSet<String> contentTypes;
+	private Set<String> contentTypes;
 
 	// row=window; col=page/editor; val=painter
 	private HashMap<IWorkbenchPart, HashMap<ISourceViewer, IndentGuidePainter>> paintMap = new HashMap<>();
@@ -92,7 +92,7 @@ public class Starter implements IStartup {
 			IWorkbenchPage page = window.getActivePage();
 			if (page != null) {
 				IWorkbenchPart part = page.getActivePart();
-				Activator.log("Indent painter: workbench page '%s'", name(part));
+				Activator.log("workbench page '%s'", name(part));
 
 				if (part instanceof MultiPageEditorPart) {
 					IEditorPart editor = activeEditor((MultiPageEditorPart) part);
@@ -109,7 +109,7 @@ public class Starter implements IStartup {
 
 	private void installPainter(IEditorPart part, IWorkbenchPart window) {
 		if (!store.getBoolean(Settings.ENABLED)) return;
-		Activator.log("Indent painter: inspecting editor '%s'", name(part));
+		Activator.log("inspecting editor '%s'", name(part));
 
 		if (part instanceof AbstractTextEditor) {
 			AbstractTextEditor editor = (AbstractTextEditor) part;
@@ -131,7 +131,7 @@ public class Starter implements IStartup {
 						painters.put(viewer, painter);
 
 						((ITextViewerExtension2) viewer).addPainter(painter);
-						Activator.log("Indent painter: installed");
+						Activator.log("painter installed");
 					}
 					paintMap.put(window, painters);
 				}
@@ -172,23 +172,20 @@ public class Starter implements IStartup {
 		}
 
 		if (type == null) {
-			Activator.log("Indent painter: disallowed for '%s' [%s]", srcname, UNKNOWN);
+			Activator.log("painter disallowed for '%s' [%s]", srcname, UNKNOWN);
 			return false;
 		}
 		if (contentTypes.contains(type.getId())) {
-			Activator.log("Indent painter: installing on '%s' [%s]", srcname, type.getName());
+			Activator.log("installing painter on '%s' [%s]", srcname, type.getName());
 			return true;
 		}
 
-		Activator.log("Indent painter: disallowed for '%s' [%s]", srcname, type.getName());
+		Activator.log("painter disallowed for '%s' [%s]", srcname, type.getName());
 		return false;
 	}
 
 	private void updateContentTypes() {
-		contentTypes = new HashSet<>();
-		String spec = store.getString(Settings.CONTENT_TYPES);
-		String[] types = spec.split(DELIM);
-		contentTypes.addAll(Arrays.asList(types));
+		contentTypes = Prefs.asLinkedSet(store.getString(Settings.CONTENT_TYPES));
 	}
 
 	private String name(IWorkbenchPart part) {
@@ -208,7 +205,7 @@ public class Starter implements IStartup {
 		@Override
 		public void partOpened(IWorkbenchPartReference ref) {
 			IWorkbenchPart part = ref.getPart(false);
-			Activator.log("Indent painter: part opened '%s'", name(part));
+			Activator.log("part opened '%s'", name(part));
 
 			if (part instanceof MultiPageEditorPart) {
 				IEditorPart editor = activeEditor((MultiPageEditorPart) part);
@@ -230,22 +227,19 @@ public class Starter implements IStartup {
 					}
 					painters.clear();
 				}
+				Activator.log("part closed '%s'", name(part));
 			}
-			Activator.log("Indent painter: part closed '%s'", name(part));
 		}
 
 		@Override
 		public void pageChanged(PageChangedEvent event) {
 			IPageChangeProvider provider = event.getPageChangeProvider();
 			if (provider instanceof MultiPageEditorPart) {
-				Activator.log("Indent painter: page change '%s'", name((IWorkbenchPart) provider));
+				Activator.log("MultiPageEditor page change '%s'", name((IWorkbenchPart) provider));
 
 				IEditorPart editor = activeEditor((MultiPageEditorPart) provider);
 				if (editor != null) {
 					installPainter(editor, (IWorkbenchPart) provider);
-
-				} else {
-					Activator.log("Indent painter: no editor on active MultiPageEditor page");
 				}
 			}
 		}
@@ -254,9 +248,24 @@ public class Starter implements IStartup {
 	private class StoreWatcher implements IPropertyChangeListener {
 
 		@Override
-		public void propertyChange(PropertyChangeEvent event) {
-			if (event.getProperty().startsWith(Settings.KEY)) {
-				updateContentTypes();
+		public void propertyChange(PropertyChangeEvent evt) {
+			if (evt.getProperty().startsWith(Settings.KEY)) {
+				String property = evt.getProperty();
+				Object old = evt.getOldValue();
+				Object now = evt.getNewValue();
+				if (property.equals(Settings.CONTENT_TYPES)) {
+					updateContentTypes();
+
+					Set<String> prev = Prefs.asLinkedSet((String) old);
+					Set<String> pres = Prefs.asLinkedSet((String) now);
+					Set<String> rmved = Utils.subtract(prev, pres);
+					Set<String> added = Utils.subtract(pres, prev);
+					if (!rmved.isEmpty()) Activator.log("property change '%s' removed %s", property, rmved);
+					if (!added.isEmpty()) Activator.log("property change '%s' added   %s", property, added);
+
+				} else {
+					Activator.log("property change '%s' [%s] => [%s]", property, old, now);
+				}
 			}
 		}
 	}

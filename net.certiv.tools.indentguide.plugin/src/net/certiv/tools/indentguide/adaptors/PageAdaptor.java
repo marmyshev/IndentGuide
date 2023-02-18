@@ -1,4 +1,4 @@
-package net.certiv.tools.indentguide.util;
+package net.certiv.tools.indentguide.adaptors;
 
 import org.eclipse.jface.dialogs.IPageChangeProvider;
 import org.eclipse.jface.dialogs.IPageChangedListener;
