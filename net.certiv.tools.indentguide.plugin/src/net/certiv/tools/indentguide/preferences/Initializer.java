@@ -13,7 +13,6 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.SWT;
 
 import net.certiv.tools.indentguide.Activator;
-import net.certiv.tools.indentguide.util.Prefs;
 
 /** Initialize default preference values. */
 public class Initializer extends AbstractPreferenceInitializer {
@@ -25,16 +24,16 @@ public class Initializer extends AbstractPreferenceInitializer {
 	public void initializeDefaultPreferences() {
 		IPreferenceStore store = Activator.getDefault().getPreferenceStore();
 
-		store.setDefault(Settings.ENABLED, true);
-		store.setDefault(Settings.LINE_ALPHA, 50);
-		store.setDefault(Settings.LINE_STYLE, SWT.LINE_SOLID);
-		store.setDefault(Settings.LINE_WIDTH, 1);
-		store.setDefault(Settings.LINE_SHIFT, 2);
-		store.setDefault(Settings.LINE_COLOR, BLACK);
-		store.setDefault(Settings.LINE_COLOR + Settings.DARK, LIGHT);
-		store.setDefault(Settings.DRAW_LEFT_END, false);
-		store.setDefault(Settings.DRAW_BLANK_LINE, true);
-		store.setDefault(Settings.SKIP_COMMENT_BLOCK, true);
-		store.setDefault(Settings.CONTENT_TYPES, Prefs.delimited(Prefs.platformTextTypes()));
+		store.setDefault(Pref.ENABLED, true);
+		store.setDefault(Pref.LINE_ALPHA, 50);
+		store.setDefault(Pref.LINE_STYLE, SWT.LINE_SOLID);
+		store.setDefault(Pref.LINE_WIDTH, 1);
+		store.setDefault(Pref.LINE_SHIFT, 2);
+		store.setDefault(Pref.LINE_COLOR, BLACK);
+		store.setDefault(Pref.LINE_COLOR + Pref.DARK, LIGHT);
+		store.setDefault(Pref.DRAW_LEFT_EDGE, false);
+		store.setDefault(Pref.DRAW_BLANK_LINE, true);
+		store.setDefault(Pref.DRAW_COMMENT_BLOCK, false);
+		store.setDefault(Pref.CONTENT_TYPES, "");
 	}
 }

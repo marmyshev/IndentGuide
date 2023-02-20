@@ -43,9 +43,9 @@ import org.eclipse.ui.texteditor.IDocumentProviderExtension4;
 
 import net.certiv.tools.indentguide.adaptors.PartAdaptor;
 import net.certiv.tools.indentguide.adaptors.WindowAdaptor;
-import net.certiv.tools.indentguide.preferences.Settings;
-import net.certiv.tools.indentguide.util.Prefs;
+import net.certiv.tools.indentguide.preferences.Pref;
 import net.certiv.tools.indentguide.util.Utils;
+import net.certiv.tools.indentguide.util.Utils.Delta;
 
 public class Starter implements IStartup {
 
@@ -58,7 +58,8 @@ public class Starter implements IStartup {
 	private static final String SOURCE_VIEWER = "getSourceViewer"; // $NON-NLS-1$
 
 	private IPreferenceStore store;
-	private Set<String> contentTypes;
+	// excluded content types
+	private Set<String> excludedTypeIds;
 
 	// row=window; col=page/editor; val=painter
 	private HashMap<IWorkbenchPart, HashMap<ISourceViewer, IndentGuidePainter>> paintMap = new HashMap<>();
@@ -92,7 +93,7 @@ public class Starter implements IStartup {
 			IWorkbenchPage page = window.getActivePage();
 			if (page != null) {
 				IWorkbenchPart part = page.getActivePart();
-				Activator.log("workbench page '%s'", name(part));
+				Activator.log("workbench page [%s]", name(part));
 
 				if (part instanceof MultiPageEditorPart) {
 					IEditorPart editor = activeEditor((MultiPageEditorPart) part);
@@ -108,8 +109,8 @@ public class Starter implements IStartup {
 	}
 
 	private void installPainter(IEditorPart part, IWorkbenchPart window) {
-		if (!store.getBoolean(Settings.ENABLED)) return;
-		Activator.log("inspecting editor '%s'", name(part));
+		if (!store.getBoolean(Pref.ENABLED)) return;
+		Activator.log("inspecting editor [%s]", name(part));
 
 		if (part instanceof AbstractTextEditor) {
 			AbstractTextEditor editor = (AbstractTextEditor) part;
@@ -175,7 +176,7 @@ public class Starter implements IStartup {
 			Activator.log("painter disallowed for '%s' [%s]", srcname, UNKNOWN);
 			return false;
 		}
-		if (contentTypes.contains(type.getId())) {
+		if (!excludedTypeIds.contains(type.getId())) {
 			Activator.log("installing painter on '%s' [%s]", srcname, type.getName());
 			return true;
 		}
@@ -185,7 +186,7 @@ public class Starter implements IStartup {
 	}
 
 	private void updateContentTypes() {
-		contentTypes = Prefs.asLinkedSet(store.getString(Settings.CONTENT_TYPES));
+		excludedTypeIds = Utils.undelimit(store.getString(Pref.CONTENT_TYPES));
 	}
 
 	private String name(IWorkbenchPart part) {
@@ -249,19 +250,16 @@ public class Starter implements IStartup {
 
 		@Override
 		public void propertyChange(PropertyChangeEvent evt) {
-			if (evt.getProperty().startsWith(Settings.KEY)) {
+			if (evt.getProperty().startsWith(Pref.KEY)) {
 				String property = evt.getProperty();
 				Object old = evt.getOldValue();
 				Object now = evt.getNewValue();
-				if (property.equals(Settings.CONTENT_TYPES)) {
+				if (property.equals(Pref.CONTENT_TYPES)) {
 					updateContentTypes();
 
-					Set<String> prev = Prefs.asLinkedSet((String) old);
-					Set<String> pres = Prefs.asLinkedSet((String) now);
-					Set<String> rmved = Utils.subtract(prev, pres);
-					Set<String> added = Utils.subtract(pres, prev);
-					if (!rmved.isEmpty()) Activator.log("property change '%s' removed %s", property, rmved);
-					if (!added.isEmpty()) Activator.log("property change '%s' added   %s", property, added);
+					Delta<String> delta = Utils.delta(Utils.undelimit((String) old), Utils.undelimit((String) now));
+					if (!delta.rmved.isEmpty()) Activator.log("property change '%s' removed %s", property, delta.rmved);
+					if (!delta.added.isEmpty()) Activator.log("property change '%s' added   %s", property, delta.added);
 
 				} else {
 					Activator.log("property change '%s' [%s] => [%s]", property, old, now);

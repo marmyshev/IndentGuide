@@ -25,7 +25,7 @@ import org.eclipse.ui.texteditor.AbstractTextEditor;
 import org.eclipse.ui.themes.ColorUtil;
 import org.osgi.framework.BundleContext;
 
-import net.certiv.tools.indentguide.preferences.Settings;
+import net.certiv.tools.indentguide.preferences.Pref;
 
 public class Activator extends AbstractUIPlugin {
 
@@ -36,7 +36,9 @@ public class Activator extends AbstractUIPlugin {
 	private static Activator plugin;
 
 	private final IEclipsePreferences[] editorScopes = new IEclipsePreferences[] {
-			InstanceScope.INSTANCE.getNode(EditorsID), DefaultScope.INSTANCE.getNode(EditorsID) };
+			InstanceScope.INSTANCE.getNode(EditorsID), //
+			DefaultScope.INSTANCE.getNode(EditorsID) //
+	};
 
 	private final IPropertyChangeListener themeChange = event -> {
 		disposeLineColor();
@@ -74,9 +76,9 @@ public class Activator extends AbstractUIPlugin {
 
 	public Color getColor() {
 		if (color == null) {
-			String key = Settings.LINE_COLOR;
+			String key = Pref.LINE_COLOR;
 			if (isDarkTheme()) {
-				key += Settings.DARK;
+				key += Pref.DARK;
 			}
 			String spec = getPreferenceStore().getString(key);
 			color = new Color(PlatformUI.getWorkbench().getDisplay(), ColorUtil.getColorValue(spec));

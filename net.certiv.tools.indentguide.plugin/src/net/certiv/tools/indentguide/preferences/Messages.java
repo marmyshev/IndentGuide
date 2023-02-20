@@ -14,24 +14,29 @@ public class Messages extends NLS {
 
 	private static final String BUNDLE_NAME = Messages.class.getName();
 
-	public static String Guide_description;
-	public static String Guide_enabled_label;
-	public static String Guide_attribute_group_label;
-	public static String Guide_alpha_label;
-	public static String Guide_style_label;
-	public static String Guide_style_solid;
-	public static String Guide_style_dash;
-	public static String Guide_style_dot;
-	public static String Guide_style_dash_dot;
-	public static String Guide_style_dash_dot_dot;
-	public static String Guide_width_label;
-	public static String Guide_shift_label;
-	public static String Guide_color_label;
-	public static String Guide_drawing_group_label;
-	public static String Guide_draw_left_end_label;
-	public static String Guide_draw_blank_line_label;
-	public static String Guide_skip_comment_block_label;
-	public static String Guide_contenttype_group_label;
+	public static String description;
+	public static String enabled_label;
+	public static String attribute_group_label;
+	public static String alpha_label1;
+	public static String alpha_label2;
+	public static String width_label1;
+	public static String width_label2;
+	public static String shift_label1;
+	public static String shift_label2;
+	public static String color_label1;
+	public static String color_label2;
+	public static String style_label1;
+	public static String style_label2;
+	public static String style_solid;
+	public static String style_dash;
+	public static String style_dot;
+	public static String style_dash_dot;
+	public static String style_dash_dot_dot;
+	public static String drawing_group_label;
+	public static String draw_start_edge_label;
+	public static String draw_blank_line_label;
+	public static String draw_comment_block_label;
+	public static String contenttype_group_label;
 
 	static {
 		NLS.initializeMessages(BUNDLE_NAME, Messages.class);

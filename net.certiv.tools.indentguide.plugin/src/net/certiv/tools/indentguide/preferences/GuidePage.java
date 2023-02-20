@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.content.IContentType;
@@ -36,40 +37,46 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import net.certiv.tools.indentguide.Activator;
-import net.certiv.tools.indentguide.util.Prefs;
 import net.certiv.tools.indentguide.util.Utils;
+import net.certiv.tools.indentguide.util.Utils.Delta;
 
-public class SettingsPage extends PreferencePage implements IWorkbenchPreferencePage {
+public class GuidePage extends PreferencePage implements IWorkbenchPreferencePage {
 
-	private static final String[] STYLES = { Messages.Guide_style_solid, Messages.Guide_style_dash,
-			Messages.Guide_style_dot, Messages.Guide_style_dash_dot, Messages.Guide_style_dash_dot_dot };
+	private static final String[] STYLES = { Messages.style_solid, Messages.style_dash, Messages.style_dot,
+			Messages.style_dash_dot, Messages.style_dash_dot_dot };
 
 	private final List<Composite> blocks = new LinkedList<>();
 	private final List<Object> parts = new LinkedList<>();
 
+	private final IContentTypeManager mgr;
+
 	// platform 'text' content type
-	private IContentType txtType;
+	private final IContentType txtType;
 
-	// initial or last OKd content type ids
-	private Set<String> current;
+	// explicitly excluded content types; current as of plugin startup or last OKd values
+	private Set<IContentType> excludeTypes;
 
-	public SettingsPage() {
+	public GuidePage() {
 		setPreferenceStore(Activator.getDefault().getPreferenceStore());
+
+		mgr = Platform.getContentTypeManager();
+		txtType = mgr.getContentType(IContentTypeManager.CT_TEXT);
+
+		Set<String> exclude = Utils.undelimit(getPreferenceStore().getString(Pref.CONTENT_TYPES));
+		excludeTypes = exclude.stream().map(e -> mgr.getContentType(e)).filter(t -> !t.equals(txtType))
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	@Override
-	public void init(IWorkbench workbench) {
-		txtType = Platform.getContentTypeManager().getContentType(IContentTypeManager.CT_TEXT);
-		current = Prefs.asLinkedSet(getPreferenceStore().getString(Settings.CONTENT_TYPES));
-	}
+	public void init(IWorkbench workbench) {}
 
 	@Override
 	protected Control createContents(Composite parent) {
 		initializeDialogUnits(parent);
 
 		Composite comp = new Composite(parent, SWT.NONE);
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(comp);
 		GridLayoutFactory.fillDefaults().applyTo(comp);
-		applyDialogFont(comp);
 
 		createEnabledCheckBox(comp);
 
@@ -77,11 +84,12 @@ public class SettingsPage extends PreferencePage implements IWorkbenchPreference
 		createDrawingGroup(comp);
 		createContentTypesGroup(comp);
 
+		applyDialogFont(comp);
 		return comp;
 	}
 
 	private void createEnabledCheckBox(Composite comp) {
-		Button btn = createLabeledCheckbox(comp, Messages.Guide_enabled_label, Settings.ENABLED);
+		Button btn = createLabeledCheckbox(comp, Messages.enabled_label, Pref.ENABLED);
 		btn.addSelectionListener(new SelectionAdapter() {
 
 			@Override
@@ -98,27 +106,27 @@ public class SettingsPage extends PreferencePage implements IWorkbenchPreference
 	}
 
 	private void createAttributeGroup(Composite parent) {
-		Composite comp = createGroup(parent, Messages.Guide_attribute_group_label, false, 2);
+		Composite comp = createGroup(parent, Messages.attribute_group_label, false, 3);
 		blocks.add(comp);
 
-		createLabeledSpinner(comp, Messages.Guide_alpha_label, 0, 255, Settings.LINE_ALPHA);
-		createLabeledCombo(comp, Messages.Guide_style_label, STYLES, Settings.LINE_STYLE);
-		createLabeledSpinner(comp, Messages.Guide_width_label, 1, 8, Settings.LINE_WIDTH);
-		createLabeledSpinner(comp, Messages.Guide_shift_label, 0, 8, Settings.LINE_SHIFT);
-		createLabeledColorEditor(comp, Messages.Guide_color_label, colorKey());
+		createLabeledSpinner(comp, Messages.alpha_label1, Messages.alpha_label2, 0, 255, Pref.LINE_ALPHA);
+		createLabeledCombo(comp, Messages.style_label1, Messages.style_label2, STYLES, Pref.LINE_STYLE);
+		createLabeledSpinner(comp, Messages.width_label1, Messages.width_label2, 1, 8, Pref.LINE_WIDTH);
+		createLabeledSpinner(comp, Messages.shift_label1, Messages.shift_label2, 0, 8, Pref.LINE_SHIFT);
+		createLabeledColorEditor(comp, Messages.color_label1, Messages.color_label2, colorKey());
 	}
 
 	private void createDrawingGroup(Composite parent) {
-		Composite comp = createGroup(parent, Messages.Guide_drawing_group_label, false, 1);
+		Composite comp = createGroup(parent, Messages.drawing_group_label, false, 1);
 		blocks.add(comp);
 
-		createLabeledCheckbox(comp, Messages.Guide_draw_left_end_label, Settings.DRAW_LEFT_END);
-		createLabeledCheckbox(comp, Messages.Guide_draw_blank_line_label, Settings.DRAW_BLANK_LINE);
-		createLabeledCheckbox(comp, Messages.Guide_skip_comment_block_label, Settings.SKIP_COMMENT_BLOCK);
+		createLabeledCheckbox(comp, Messages.draw_start_edge_label, Pref.DRAW_LEFT_EDGE);
+		createLabeledCheckbox(comp, Messages.draw_blank_line_label, Pref.DRAW_BLANK_LINE);
+		createLabeledCheckbox(comp, Messages.draw_comment_block_label, Pref.DRAW_COMMENT_BLOCK);
 	}
 
 	private void createContentTypesGroup(Composite parent) {
-		Composite comp = createGroup(parent, Messages.Guide_contenttype_group_label, true, 1);
+		Composite comp = createGroup(parent, Messages.contenttype_group_label, true, 1);
 		blocks.add(comp);
 
 		CheckboxTreeViewer viewer = new CheckboxTreeViewer(comp, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
@@ -136,44 +144,53 @@ public class SettingsPage extends PreferencePage implements IWorkbenchPreference
 		viewer.collapseAll();
 		viewer.expandToLevel(2);
 
-		TypesContentProvider provider = (TypesContentProvider) viewer.getContentProvider();
+		// init all to checked
+		for (Object item : Utils.platformTextTypes()) {
+			viewer.setChecked(item, true);
+			viewer.setGrayed(item, false);
+		}
+
+		// remove excluded
+		for (IContentType exType : excludeTypes) {
+			viewer.setChecked(exType, false);
+			updateCheckState(viewer, exType, false);
+		}
+
 		viewer.addCheckStateListener(evt -> {
 			IContentType type = (IContentType) evt.getElement();
-			updateCheckState(viewer, provider, type);
-			Activator.log("state change %s [%s]", type, viewer.getChecked(type));
+			boolean state = viewer.getChecked(type);
+			updateCheckState(viewer, type, state);
+			Activator.log("state change %s [%s]", type, state);
 		});
-
-		initCheckState(viewer, provider);
 	}
 
 	private Composite createGroup(Composite parent, String label, boolean vert, int cols) {
 		Group group = new Group(parent, SWT.NONE);
+		group.setText(label);
 		GridLayoutFactory.fillDefaults().applyTo(group);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(true, vert).applyTo(group);
-		group.setText(label);
 
 		Composite comp = new Composite(group, SWT.NONE);
-		GridLayoutFactory.fillDefaults().numColumns(cols).margins(5, 5).applyTo(comp);
+		GridLayoutFactory.fillDefaults().numColumns(cols).equalWidth(false).margins(5, 5).applyTo(comp);
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.FILL).grab(true, vert).indent(5, 0).applyTo(comp);
 
 		return comp;
 	}
 
-	/** Creates a vertical spacer. */
 	private void createVerticalSpacer(Composite comp, int lines) {
 		createVerticalSpacer(comp, lines, 1);
 	}
 
-	/** Creates a vertical spacer. */
 	private void createVerticalSpacer(Composite comp, int lines, int span) {
-		Label lbl = new Label(comp, SWT.NONE);
-		int height = Prefs.lineHeight(comp, lines);
-		GridDataFactory.fillDefaults().hint(SWT.DEFAULT, height).grab(true, false).span(span, 1).applyTo(lbl);
+		Label spacer = new Label(comp, SWT.NONE);
+		int height = Utils.lineHeight(comp, lines);
+		GridDataFactory.fillDefaults().hint(SWT.DEFAULT, height).grab(true, false).span(span, 1).applyTo(spacer);
 	}
 
 	private Label createLabel(Composite comp, String text) {
 		Label label = new Label(comp, SWT.NONE);
 		label.setText(text);
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).applyTo(label);
 		return label;
 	}
 
@@ -182,79 +199,60 @@ public class SettingsPage extends PreferencePage implements IWorkbenchPreference
 		btn.setText(label);
 		btn.setData(key);
 		btn.setSelection(getPreferenceStore().getBoolean(key));
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).applyTo(btn);
+
 		parts.add(btn);
 		return btn;
 	}
 
-	private Combo createLabeledCombo(Composite comp, String label, String[] styles, String key) {
+	private Combo createLabeledCombo(Composite comp, String label, String trail, String[] styles, String key) {
 		createLabel(comp, label);
 		Combo combo = new Combo(comp, SWT.READ_ONLY);
 		combo.setData(key);
 		combo.setItems(styles);
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).indent(9, 0).applyTo(combo);
 
 		int idx = getPreferenceStore().getInt(key) - 1;
 		idx = (idx >= 0 && idx < styles.length) ? idx : 0;
 		combo.setText(styles[idx]);
 
+		createLabel(comp, trail);
+
 		parts.add(combo);
 		return combo;
 	}
 
-	private Spinner createLabeledSpinner(Composite comp, String label, int min, int max, String key) {
+	private Spinner createLabeledSpinner(Composite comp, String label, String trail, int min, int max, String key) {
 		createLabel(comp, label);
+
 		Spinner spin = new Spinner(comp, SWT.BORDER);
 		spin.setData(key);
 		spin.setMinimum(min);
 		spin.setMaximum(max);
 		spin.setSelection(getPreferenceStore().getInt(key));
+		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.CENTER).indent(9, 0).applyTo(spin);
+
+		createLabel(comp, trail);
+
 		parts.add(spin);
 		return spin;
 	}
 
-	private void createLabeledColorEditor(Composite comp, String label, String key) {
-		ColorFieldEditor editor = new ColorFieldEditor(key, Messages.Guide_color_label, comp);
+	private void createLabeledColorEditor(Composite comp, String label, String trail, String key) {
+		createLabel(comp, label);
+
+		// required to constrain the layout expansiveness of the field editor
+		Composite inner = new Composite(comp, SWT.NONE);
+		GridLayoutFactory.fillDefaults().applyTo(inner);
+		GridDataFactory.fillDefaults().applyTo(inner);
+
+		ColorFieldEditor editor = new ColorFieldEditor(key, "", inner);
 		editor.setPreferenceStore(getPreferenceStore());
 		editor.load();
+
+		createLabel(comp, trail);
+
 		parts.add(editor);
-	}
-
-	@Override
-	public boolean performOk() {
-		IPreferenceStore store = getPreferenceStore();
-
-		for (Object part : parts) {
-			if (part instanceof Button) {
-				Button btn = ((Button) part);
-				String key = (String) btn.getData();
-				store.setValue(key, btn.getSelection());
-
-			} else if (part instanceof Combo) {
-				Combo combo = ((Combo) part);
-				String key = (String) combo.getData();
-				store.setValue(key, combo.getSelectionIndex() + 1);
-
-			} else if (part instanceof Spinner) {
-				Spinner spin = ((Spinner) part);
-				String key = (String) spin.getData();
-				store.setValue(key, spin.getSelection());
-
-			} else if (part instanceof ColorFieldEditor) {
-				ColorFieldEditor editor = (ColorFieldEditor) part;
-				editor.store();
-				Activator.getDefault().setColor(editor.getColorSelector().getColorValue());
-
-			} else if (part instanceof CheckboxTreeViewer) {
-				CheckboxTreeViewer viewer = (CheckboxTreeViewer) part;
-				current = getCheckState(viewer);
-				store.setValue(Settings.CONTENT_TYPES, Prefs.delimited(current));
-
-				Set<String> alltypes = Prefs.asLinkedSet(store.getDefaultString(Settings.CONTENT_TYPES));
-				Set<String> disabled = Utils.subtract(alltypes, current);
-				if (!disabled.isEmpty()) Activator.log("content types disabled: %s", disabled);
-			}
-		}
-
-		return super.performOk();
 	}
 
 	@Override
@@ -286,20 +284,11 @@ public class SettingsPage extends PreferencePage implements IWorkbenchPreference
 			} else if (part instanceof CheckboxTreeViewer) {
 				CheckboxTreeViewer viewer = (CheckboxTreeViewer) part;
 
-				for (Object item : viewer.getCheckedElements()) {
-					viewer.setChecked(item, false);
-					viewer.setGrayed(item, false);
-				}
-
-				IContentTypeManager mgr = Platform.getContentTypeManager();
-				TypesContentProvider provider = (TypesContentProvider) viewer.getContentProvider();
-
-				current = Prefs.asLinkedSet(store.getDefaultString(Settings.CONTENT_TYPES));
-				for (String id : current) {
-					IContentType type = mgr.getContentType(id);
-					if (!type.equals(txtType)) {
+				excludeTypes.clear();
+				for (Object type : Utils.platformTextTypes()) {
+					if (!viewer.getChecked(type)) {
 						viewer.setChecked(type, true);
-						updateCheckState(viewer, provider, type);
+						// viewer.setGrayed(type, false);
 					}
 				}
 			}
@@ -308,56 +297,99 @@ public class SettingsPage extends PreferencePage implements IWorkbenchPreference
 		super.performDefaults();
 	}
 
-	private void initCheckState(CheckboxTreeViewer viewer, TypesContentProvider provider) {
-		IContentTypeManager mgr = Platform.getContentTypeManager();
-		for (String elem : current) {
-			IContentType type = mgr.getContentType(elem);
-			if (type != null && !type.equals(txtType)) {
-				viewer.setChecked(type, true);
-				updateCheckState(viewer, provider, type);
+	@Override
+	public boolean performOk() {
+		IPreferenceStore store = getPreferenceStore();
+
+		for (Object part : parts) {
+			if (part instanceof Button) {
+				Button btn = ((Button) part);
+				String key = (String) btn.getData();
+				store.setValue(key, btn.getSelection());
+
+			} else if (part instanceof Combo) {
+				Combo combo = ((Combo) part);
+				String key = (String) combo.getData();
+				store.setValue(key, combo.getSelectionIndex() + 1);
+
+			} else if (part instanceof Spinner) {
+				Spinner spin = ((Spinner) part);
+				String key = (String) spin.getData();
+				store.setValue(key, spin.getSelection());
+
+			} else if (part instanceof ColorFieldEditor) {
+				ColorFieldEditor editor = (ColorFieldEditor) part;
+				editor.store();
+				Activator.getDefault().setColor(editor.getColorSelector().getColorValue());
+
+			} else if (part instanceof CheckboxTreeViewer) {
+				CheckboxTreeViewer viewer = (CheckboxTreeViewer) part;
+				Set<IContentType> unchecked = getUnChecked(viewer);
+
+				Delta<IContentType> delta = Utils.delta(excludeTypes, unchecked);
+				if (!delta.added.isEmpty()) {
+					Activator.log("content types excluded: %s", delta.added);
+				}
+				if (!delta.rmved.isEmpty()) {
+					Activator.log("content types restored: %s", delta.rmved);
+				}
+
+				excludeTypes = unchecked;
+				store.setValue(Pref.CONTENT_TYPES, Utils.delimitTypes(excludeTypes));
 			}
 		}
+
+		return super.performOk();
 	}
 
-	/* Returns the id of checked, but not grayed, elements in the tree viewer */
-	private Set<String> getCheckState(CheckboxTreeViewer viewer) {
-		Set<String> checked = new LinkedHashSet<>();
-		for (Object item : viewer.getCheckedElements()) {
-			if (!viewer.getGrayed(item)) {
-				checked.add(((IContentType) item).getId());
-			}
-		}
-		return checked;
+	/**
+	 * Returns the types of the checked, and optionally not grayed, elements in the tree viewer.
+	 *
+	 * @param viewer the tree viewer
+	 * @param grayed include grayed if {@code true}; exclude grayed if {@code false}
+	 * @return the checked, and optionally not grayed, types
+	 */
+	private Set<IContentType> getChecked(CheckboxTreeViewer viewer, boolean grayed) {
+		Set<IContentType> checked = Arrays.stream(viewer.getCheckedElements()).map(e -> (IContentType) e)
+				.collect(Collectors.toCollection(LinkedHashSet::new));
+
+		if (grayed) return checked;
+		return checked.stream().filter(t -> !viewer.getGrayed(t)).collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
-	private void updateCheckState(CheckboxTreeViewer viewer, TypesContentProvider provider, IContentType type) {
-		boolean state = viewer.getChecked(type);
+	/** Returns the types of the unchecked tree viewer items */
+	private Set<IContentType> getUnChecked(CheckboxTreeViewer viewer) {
+		return Utils.subtract(Utils.platformTextTypes(), getChecked(viewer, true));
+	}
 
-		// adj child states to match the current item state
+	private void updateCheckState(CheckboxTreeViewer viewer, IContentType type, boolean state) {
+		viewer.setGrayed(type, false);
+
+		// adjust child states to match the current item state
+		TypesContentProvider provider = (TypesContentProvider) viewer.getContentProvider();
 		for (Object child : provider.getChildren(type)) {
 			viewer.setChecked(child, state);
 		}
-		viewer.setGrayed(type, false);
 
 		// adj parent hierarchy states to reflect the current item state
 		IContentType parent = (IContentType) provider.getParent(type);
 		while (parent != null) {
 			LinkedList<Object> children = new LinkedList<>(Arrays.asList(provider.getChildren(parent)));
 
-			boolean allchecked = children.stream().allMatch(e -> viewer.getChecked(e));
-			boolean onechecked = children.stream().anyMatch(e -> viewer.getChecked(e));
+			boolean all = children.stream().allMatch(e -> viewer.getChecked(e));
+			boolean any = children.stream().anyMatch(e -> viewer.getChecked(e));
 
-			viewer.setGrayed(parent, onechecked && !allchecked);
-			viewer.setChecked(parent, allchecked || onechecked);
+			viewer.setChecked(parent, all || any);
+			viewer.setGrayed(parent, any && !all);
 
 			parent = parent.getBaseType();
 		}
 	}
 
 	private String colorKey() {
-		String key = Settings.LINE_COLOR;
+		String key = Pref.LINE_COLOR;
 		if (Activator.getDefault().isDarkTheme()) {
-			key += Settings.DARK;
+			key += Pref.DARK;
 		}
 		return key;
 	}

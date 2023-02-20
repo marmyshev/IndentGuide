@@ -9,7 +9,7 @@
 package net.certiv.tools.indentguide.preferences;
 
 /** Constant definitions for plug-in preferences */
-public class Settings {
+public class Pref {
 
 	public static final String KEY = "indentguide."; //$NON-NLS-1$
 	public static final String DARK = ".dark"; //$NON-NLS-1$
@@ -22,8 +22,8 @@ public class Settings {
 	public static final String LINE_SHIFT = KEY + "line_shift"; //$NON-NLS-1$
 	public static final String LINE_COLOR = KEY + "line_color"; //$NON-NLS-1$
 
-	public static final String DRAW_LEFT_END = KEY + "draw_left_end"; //$NON-NLS-1$
+	public static final String DRAW_LEFT_EDGE = KEY + "draw_left_edge"; //$NON-NLS-1$
 	public static final String DRAW_BLANK_LINE = KEY + "draw_blank_line"; //$NON-NLS-1$
-	public static final String SKIP_COMMENT_BLOCK = KEY + "skip_comment_block"; //$NON-NLS-1$
+	public static final String DRAW_COMMENT_BLOCK = KEY + "draw_comment_block"; //$NON-NLS-1$
 	public static final String CONTENT_TYPES = KEY + "content_types"; //$NON-NLS-1$
 }

@@ -5,8 +5,8 @@
          point="org.eclipse.ui.preferencePages">
       <page
             category="org.eclipse.ui.preferencePages.GeneralTextEditor"
-            class="net.certiv.tools.indentguide.preferences.SettingsPage"
-            id="net.certiv.tools.indentguide.preferences.SettingsPage"
+            class="net.certiv.tools.indentguide.preferences.GuidePage"
+            id="net.certiv.tools.indentguide.preferences.GuidePage"
             name="Indent Guide">
       </page>
    </extension>

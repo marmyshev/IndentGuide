@@ -28,7 +28,7 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.LineAttributes;
 import org.eclipse.swt.graphics.Point;
 
-import net.certiv.tools.indentguide.preferences.Settings;
+import net.certiv.tools.indentguide.preferences.Pref;
 
 /**
  * A painter for drawing visible indent guide lines.
@@ -57,10 +57,10 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 	private int lineShift;
 	private boolean drawLeftEnd;
 	private boolean drawBlankLine;
-	private boolean skipCommentBlock;
+	private boolean drawCommentBlock;
 
 	private final IPropertyChangeListener propertyWatcher = event -> {
-		if (event.getProperty().startsWith(Settings.KEY)) {
+		if (event.getProperty().startsWith(Pref.KEY)) {
 			update();
 			redrawAll();
 		}
@@ -117,8 +117,7 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 				if (widgetOffset >= 0 && redrawLength > 0) {
 					widget.redrawRange(widgetOffset, redrawLength, true);
 				}
-			}
-			catch (BadLocationException e) {}
+			} catch (BadLocationException e) {}
 		}
 	}
 
@@ -142,13 +141,13 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 	}
 
 	private void update() {
-		lineAlpha = store.getInt(Settings.LINE_ALPHA);
-		lineStyle = store.getInt(Settings.LINE_STYLE);
-		lineWidth = store.getInt(Settings.LINE_WIDTH);
-		lineShift = store.getInt(Settings.LINE_SHIFT);
-		drawLeftEnd = store.getBoolean(Settings.DRAW_LEFT_END);
-		drawBlankLine = store.getBoolean(Settings.DRAW_BLANK_LINE);
-		skipCommentBlock = store.getBoolean(Settings.SKIP_COMMENT_BLOCK);
+		lineAlpha = store.getInt(Pref.LINE_ALPHA);
+		lineStyle = store.getInt(Pref.LINE_STYLE);
+		lineWidth = store.getInt(Pref.LINE_WIDTH);
+		lineShift = store.getInt(Pref.LINE_SHIFT);
+		drawLeftEnd = store.getBoolean(Pref.DRAW_LEFT_EDGE);
+		drawBlankLine = store.getBoolean(Pref.DRAW_BLANK_LINE);
+		drawCommentBlock = store.getBoolean(Pref.DRAW_COMMENT_BLOCK);
 	}
 
 	// Draw characters in view range.
@@ -195,7 +194,7 @@ public class IndentGuidePainter implements IPainter, PaintListener {
 			if (!isFoldedLine(content.getLineAtOffset(offset))) {
 				String text = widget.getLine(line);
 				int extend = 0;
-				if (skipCommentBlock && assumeCommentBlock(text, tabWidth)) {
+				if (!drawCommentBlock && assumeCommentBlock(text, tabWidth)) {
 					extend -= tabWidth;
 				}
 				if (drawBlankLine && text.trim().length() == 0) {
