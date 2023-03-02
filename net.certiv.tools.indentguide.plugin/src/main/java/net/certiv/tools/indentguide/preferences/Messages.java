@@ -33,7 +33,7 @@ public class Messages extends NLS {
 	public static String style_dash_dot;
 	public static String style_dash_dot_dot;
 	public static String drawing_group_label;
-	public static String draw_start_edge_label;
+	public static String draw_lead_edge_label;
 	public static String draw_blank_line_label;
 	public static String draw_comment_block_label;
 	public static String contenttype_group_label;

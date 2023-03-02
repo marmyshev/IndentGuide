@@ -94,12 +94,13 @@ public class GuidePage extends PreferencePage implements IWorkbenchPreferencePag
 
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
-				boolean state = btn.getSelection();
+				boolean active = btn.getSelection();
 				for (Composite comp : blocks) {
 					for (Control control : comp.getChildren()) {
-						control.setEnabled(state);
+						control.setEnabled(active);
 					}
 				}
+				// TODO: call #redrawAll on guide painter(s)
 			}
 		});
 		createVerticalSpacer(comp, 1);
@@ -120,7 +121,7 @@ public class GuidePage extends PreferencePage implements IWorkbenchPreferencePag
 		Composite comp = createGroup(parent, Messages.drawing_group_label, false, 1);
 		blocks.add(comp);
 
-		createLabeledCheckbox(comp, Messages.draw_start_edge_label, Pref.DRAW_LEFT_EDGE);
+		createLabeledCheckbox(comp, Messages.draw_lead_edge_label, Pref.DRAW_LEAD_EDGE);
 		createLabeledCheckbox(comp, Messages.draw_blank_line_label, Pref.DRAW_BLANK_LINE);
 		createLabeledCheckbox(comp, Messages.draw_comment_block_label, Pref.DRAW_COMMENT_BLOCK);
 	}
@@ -279,7 +280,6 @@ public class GuidePage extends PreferencePage implements IWorkbenchPreferencePag
 			} else if (part instanceof ColorFieldEditor) {
 				ColorFieldEditor editor = (ColorFieldEditor) part;
 				editor.loadDefault();
-				Activator.getDefault().setColor(editor.getColorSelector().getColorValue());
 
 			} else if (part instanceof CheckboxTreeViewer) {
 				CheckboxTreeViewer viewer = (CheckboxTreeViewer) part;
@@ -320,7 +320,6 @@ public class GuidePage extends PreferencePage implements IWorkbenchPreferencePag
 			} else if (part instanceof ColorFieldEditor) {
 				ColorFieldEditor editor = (ColorFieldEditor) part;
 				editor.store();
-				Activator.getDefault().setColor(editor.getColorSelector().getColorValue());
 
 			} else if (part instanceof CheckboxTreeViewer) {
 				CheckboxTreeViewer viewer = (CheckboxTreeViewer) part;
@@ -388,7 +387,7 @@ public class GuidePage extends PreferencePage implements IWorkbenchPreferencePag
 
 	private String colorKey() {
 		String key = Pref.LINE_COLOR;
-		if (Activator.getDefault().isDarkTheme()) {
+		if (Utils.isDarkTheme()) {
 			key += Pref.DARK;
 		}
 		return key;

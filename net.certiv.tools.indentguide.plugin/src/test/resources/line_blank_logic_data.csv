@@ -1,0 +1,5 @@
+idx, draw,  comment, blank, drawComment, drawBlankLn, drawLeadEdge, first,  only
+0,   true,  false,   true,  false,       true,        false,        false,  false
+1,   false, false,   true,  false,       true,        false,        true,   false
+2,   true,  false,   true,  false,       true,        true,         true,   false
+3,   false, false,   true,  false,       true,        true,         true,   true

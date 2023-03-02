@@ -8,7 +8,6 @@
  *****************************************************************************/
 package net.certiv.tools.indentguide;
 
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -24,7 +23,6 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.ITextViewerExtension2;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IStartup;
@@ -40,17 +38,17 @@ import org.eclipse.ui.progress.UIJob;
 import org.eclipse.ui.texteditor.AbstractTextEditor;
 import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.IDocumentProviderExtension4;
+import org.eclipse.ui.themes.IThemeManager;
 
 import net.certiv.tools.indentguide.adaptors.PartAdaptor;
 import net.certiv.tools.indentguide.adaptors.WindowAdaptor;
+import net.certiv.tools.indentguide.painter.GuidePainter;
 import net.certiv.tools.indentguide.preferences.Pref;
+import net.certiv.tools.indentguide.util.MsgBuilder;
 import net.certiv.tools.indentguide.util.Utils;
 import net.certiv.tools.indentguide.util.Utils.Delta;
 
 public class Starter implements IStartup {
-
-	private static final Class<?>[] CLS_TYPE = null;
-	private static final Object[] ARG_TYPE = null;
 
 	private static final String UNKNOWN = "Unknown"; // $NON-NLS-1$
 
@@ -58,11 +56,37 @@ public class Starter implements IStartup {
 	private static final String SOURCE_VIEWER = "getSourceViewer"; // $NON-NLS-1$
 
 	private IPreferenceStore store;
-	// excluded content types
-	private Set<String> excludedTypeIds;
+	private Set<String> excludedTypeIds;	// excluded content types
 
 	// row=window; col=page/editor; val=painter
-	private HashMap<IWorkbenchPart, HashMap<ISourceViewer, IndentGuidePainter>> paintMap = new HashMap<>();
+	private HashMap<IWorkbenchPart, HashMap<ISourceViewer, GuidePainter>> paintMap = new HashMap<>();
+
+	private final IPropertyChangeListener propsListener = evt -> {
+		String prop = evt.getProperty();
+		Object old = evt.getOldValue();
+		Object cur = evt.getNewValue();
+
+		if (prop.equals(IThemeManager.CHANGE_CURRENT_THEME)) {
+			Activator.log("theme change '%s' [%s] => [%s]", prop, old, cur);
+			loadPaintPrefs();
+
+		} else if (prop.startsWith(Pref.KEY)) {
+			if (prop.equals(Pref.CONTENT_TYPES)) {
+				updateContentTypes();
+
+				Delta<String> delta = Utils.delta(Utils.undelimit((String) old), Utils.undelimit((String) cur));
+				MsgBuilder mb = new MsgBuilder("content type change [%s]", prop);
+				if (!delta.added.isEmpty()) mb.nl().indent("added   [%s]", delta.added);
+				if (!delta.rmved.isEmpty()) mb.nl().indent("removed [%s]", delta.rmved);
+				Activator.log(mb.toString());
+
+			} else {
+				Activator.log("property change '%s' [%s] => [%s]", prop, old, cur);
+			}
+
+			loadPaintPrefs();
+		}
+	};
 
 	@Override
 	public void earlyStartup() {
@@ -70,8 +94,9 @@ public class Starter implements IStartup {
 
 			@Override
 			public IStatus runInUIThread(IProgressMonitor monitor) {
+				PlatformUI.getWorkbench().getThemeManager().addPropertyChangeListener(propsListener);
 				store = Activator.getDefault().getPreferenceStore();
-				store.addPropertyChangeListener(new StoreWatcher());
+				store.addPropertyChangeListener(propsListener);
 				updateContentTypes();
 
 				IWorkbench workbench = PlatformUI.getWorkbench();
@@ -110,25 +135,26 @@ public class Starter implements IStartup {
 
 	private void installPainter(IEditorPart part, IWorkbenchPart window) {
 		if (!store.getBoolean(Pref.ENABLED)) return;
-		Activator.log("inspecting editor [%s]", name(part));
 
 		if (part instanceof AbstractTextEditor) {
 			AbstractTextEditor editor = (AbstractTextEditor) part;
+			Activator.log("inspecting editor [%s]", name(part));
+
 			if (!validType(editor)) return;
 
 			Class<?> cls = editor.getClass();
 			while (!cls.equals(AbstractTextEditor.class)) {
 				cls = cls.getSuperclass();
 			}
+
 			try {
-				Method method = cls.getDeclaredMethod(SOURCE_VIEWER, CLS_TYPE);
-				method.setAccessible(true);
-				ISourceViewer viewer = (ISourceViewer) method.invoke(editor, ARG_TYPE);
+				ISourceViewer viewer = Utils.invoke(cls, SOURCE_VIEWER);
+
 				if (viewer instanceof ITextViewerExtension2) {
-					HashMap<ISourceViewer, IndentGuidePainter> painters = paintMap.get(window);
+					HashMap<ISourceViewer, GuidePainter> painters = paintMap.get(window);
 					if (painters == null) painters = new HashMap<>();
 					if (!painters.containsKey(viewer)) {
-						IndentGuidePainter painter = new IndentGuidePainter(viewer);
+						GuidePainter painter = new GuidePainter(viewer);
 						painters.put(viewer, painter);
 
 						((ITextViewerExtension2) viewer).addPainter(painter);
@@ -136,7 +162,7 @@ public class Starter implements IStartup {
 					}
 					paintMap.put(window, painters);
 				}
-			} catch (Exception e) {
+			} catch (Throwable e) {
 				Activator.log(e);
 			}
 		}
@@ -148,11 +174,9 @@ public class Starter implements IStartup {
 		}
 
 		try {
-			Method method = mpe.getClass().getDeclaredMethod(ACTIVE_EDITOR, CLS_TYPE);
-			method.setAccessible(true);
-			return (IEditorPart) method.invoke(mpe, ARG_TYPE);
+			return Utils.invoke(mpe, ACTIVE_EDITOR);
 
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			Activator.log(e);
 			return null;
 		}
@@ -193,6 +217,15 @@ public class Starter implements IStartup {
 		return part.getClass().getName();
 	}
 
+	private void loadPaintPrefs() {
+		for (HashMap<ISourceViewer, GuidePainter> map : paintMap.values()) {
+			for (GuidePainter painter : map.values()) {
+				painter.loadPrefs();
+				painter.redrawAll();
+			}
+		}
+	}
+
 	private class WindowWatcher extends WindowAdaptor {
 
 		@Override
@@ -221,9 +254,9 @@ public class Starter implements IStartup {
 		public void partClosed(IWorkbenchPartReference ref) {
 			IWorkbenchPart part = ref.getPart(false);
 			if (part instanceof MultiPageEditorPart || part instanceof AbstractTextEditor) {
-				HashMap<ISourceViewer, IndentGuidePainter> painters = paintMap.remove(part);
+				HashMap<ISourceViewer, GuidePainter> painters = paintMap.remove(part);
 				if (painters != null) {
-					for (IndentGuidePainter painter : painters.values()) {
+					for (GuidePainter painter : painters.values()) {
 						painter.deactivate(true);
 					}
 					painters.clear();
@@ -241,28 +274,6 @@ public class Starter implements IStartup {
 				IEditorPart editor = activeEditor((MultiPageEditorPart) provider);
 				if (editor != null) {
 					installPainter(editor, (IWorkbenchPart) provider);
-				}
-			}
-		}
-	}
-
-	private class StoreWatcher implements IPropertyChangeListener {
-
-		@Override
-		public void propertyChange(PropertyChangeEvent evt) {
-			if (evt.getProperty().startsWith(Pref.KEY)) {
-				String property = evt.getProperty();
-				Object old = evt.getOldValue();
-				Object now = evt.getNewValue();
-				if (property.equals(Pref.CONTENT_TYPES)) {
-					updateContentTypes();
-
-					Delta<String> delta = Utils.delta(Utils.undelimit((String) old), Utils.undelimit((String) now));
-					if (!delta.rmved.isEmpty()) Activator.log("property change '%s' removed %s", property, delta.rmved);
-					if (!delta.added.isEmpty()) Activator.log("property change '%s' added   %s", property, delta.added);
-
-				} else {
-					Activator.log("property change '%s' [%s] => [%s]", property, old, now);
 				}
 			}
 		}

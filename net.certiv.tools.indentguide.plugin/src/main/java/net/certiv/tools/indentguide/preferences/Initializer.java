@@ -31,7 +31,7 @@ public class Initializer extends AbstractPreferenceInitializer {
 		store.setDefault(Pref.LINE_SHIFT, 2);
 		store.setDefault(Pref.LINE_COLOR, BLACK);
 		store.setDefault(Pref.LINE_COLOR + Pref.DARK, LIGHT);
-		store.setDefault(Pref.DRAW_LEFT_EDGE, false);
+		store.setDefault(Pref.DRAW_LEAD_EDGE, false);
 		store.setDefault(Pref.DRAW_BLANK_LINE, true);
 		store.setDefault(Pref.DRAW_COMMENT_BLOCK, false);
 		store.setDefault(Pref.CONTENT_TYPES, "");

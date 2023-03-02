@@ -17,6 +17,7 @@
             class="net.certiv.tools.indentguide.preferences.Initializer">
       </initializer>
    </extension>
+   
    <extension
          point="org.eclipse.ui.startup">
       <startup
