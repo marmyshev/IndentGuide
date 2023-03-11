@@ -62,6 +62,7 @@ public class GuidePainter implements IPainter, PaintListener {
 		widget = viewer.getTextWidget();
 		advanced = Utils.setAdvanced(widget);
 		store = Activator.getDefault().getPreferenceStore();
+
 		loadPrefs();
 	}
 
@@ -101,9 +102,9 @@ public class GuidePainter implements IPainter, PaintListener {
 
 	@Override
 	public void paintControl(PaintEvent evt) {
-		if (widget == null) return;
-
-		handleDrawRequest(evt.gc, evt.x, evt.y, evt.width, evt.height);
+		if (widget != null) {
+			handleDrawRequest(evt.gc, evt.x, evt.y, evt.width, evt.height);
+		}
 	}
 
 	// Draw characters in view range.
@@ -166,7 +167,7 @@ public class GuidePainter implements IPainter, PaintListener {
 						nextNb = nextNonblankLine(nextNb, docLine, tabWidth);
 						// log(ln.dir, prevNb, ln, nextNb);
 
-						// change in dents: -1 <- 0 -> 1
+						// change in dents: - <-> +
 						ln.delta = nextNb.tabs() - prevNb.tabs();
 
 						ln.stops.clear();
@@ -187,33 +188,37 @@ public class GuidePainter implements IPainter, PaintListener {
 					boolean last = stop == ln.stops.peekLast();
 
 					if (ln.comment) {
-
-						// never draw on first visible character
+						// skip first visible character
 						if (stop.col == ln.beg) continue;
 
-						// do not draw if not
-						// drawComment && !first ||
-						// drawComment && only && first ||
-						// drawLeadEdge && first
-						if (!(drawComment && (!first || only && first) || drawLeadEdge && first)) continue;
+						// skip first where only unless drawComment or drawLeadEdge
+						if (only && !(drawComment || drawLeadEdge)) continue;
+
+						// skip first where not only unless drawLeadEdge
+						if (first && !only && !drawLeadEdge) continue;
+
+						// skip last where !only unless drawComment
+						if (last && !only && !drawComment) continue;
 
 					} else if (ln.blank) {
+						// skip first where only and zero
+						if (first && only && zero) continue;
 
-						// do not draw if not
-						// drawBlankLn && !first && !(last && zero) ||
-						// drawBlankLn && drawLeadEdge && first && zero && nest ||
-						// drawBlankLn && drawLeadEdge && first && !zero
-						if (!(drawBlankLn
-								&& (!first && !(last && zero) || drawLeadEdge && first && (zero && nest || !zero))))
-							continue;
+						// skip last where not only and zero
+						if (last && !only && zero) continue;
+
+						// skip first where not zero unless drawBlankLn and drawLeadEdge
+						if (first && !zero && !(drawBlankLn && drawLeadEdge)) continue;
+
+						// skip first where zero and nest unless drawBlankLn and drawLeadEdge
+						if (first && zero && nest && !(drawBlankLn && drawLeadEdge)) continue;
 
 					} else {
-
-						// never draw on first visible character
+						// skip first visible character
 						if (stop.col == ln.beg) continue;
 
-						// do not draw if not drawLeadEdge at first stop
-						if (!drawLeadEdge && first) continue;
+						// skip first unless drawLeadEdge
+						if (first && !drawLeadEdge) continue;
 					}
 
 					draw(gc, offset, stop.col, spcWidth);
@@ -268,6 +273,18 @@ public class GuidePainter implements IPainter, PaintListener {
 		drawLeadEdge = store.getBoolean(Pref.DRAW_LEAD_EDGE);
 		drawBlankLn = store.getBoolean(Pref.DRAW_BLANK_LINE);
 		drawComment = store.getBoolean(Pref.DRAW_COMMENT_BLOCK);
+	}
+
+	public boolean isActive() {
+		return active;
+	}
+
+	public void activate(boolean redraw) {
+		if (!active) {
+			active = true;
+			widget.addPaintListener(this);
+			if (redraw) redrawAll();
+		}
 	}
 
 	@Override

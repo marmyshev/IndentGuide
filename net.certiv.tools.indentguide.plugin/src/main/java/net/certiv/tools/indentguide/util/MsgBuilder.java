@@ -15,7 +15,7 @@ public class MsgBuilder {
 
 	/**
 	 * Append a formatted string.
-	 * 
+	 *
 	 * @param format the format specification
 	 * @param args   supplied arguments
 	 * @return this
@@ -27,7 +27,7 @@ public class MsgBuilder {
 
 	/**
 	 * Conditionally append a formatted string.
-	 * 
+	 *
 	 * @param cond   the append enable condition
 	 * @param format the format specification
 	 * @param args   supplied arguments
@@ -39,37 +39,8 @@ public class MsgBuilder {
 	}
 
 	/**
-	 * Append a EOL terminal followed by a formatted string.
-	 * 
-	 * @param format the format specification
-	 * @param args   supplied arguments
-	 * @return this
-	 */
-	public MsgBuilder appendNL(String format, Object... args) {
-		nl();
-		sb.append(String.format(format, args));
-		return this;
-	}
-
-	/**
-	 * Append a EOL terminal followed by a formatted string.
-	 * 
-	 * @param cond   the append enable condition
-	 * @param format the format specification
-	 * @param args   supplied arguments
-	 * @return this
-	 */
-	public MsgBuilder appendNL(boolean cond, String format, Object... args) {
-		if (cond) {
-			nl();
-			sb.append(String.format(format, args));
-		}
-		return this;
-	}
-
-	/**
 	 * Append a formatted string with a leading tab character.
-	 * 
+	 *
 	 * @param format the format specification
 	 * @param args   supplied arguments
 	 * @return this
@@ -82,7 +53,7 @@ public class MsgBuilder {
 
 	/**
 	 * Append a formatted string with a leading tab character.
-	 * 
+	 *
 	 * @param cond   the append enable condition
 	 * @param format the format specification
 	 * @param args   supplied arguments
@@ -90,37 +61,6 @@ public class MsgBuilder {
 	 */
 	public MsgBuilder indent(boolean cond, String format, Object... args) {
 		if (cond) {
-			indent();
-			sb.append(String.format(format, args));
-		}
-		return this;
-	}
-
-	/**
-	 * Append a EOL terminal followed by a tab character and formatted string.
-	 * 
-	 * @param format the format specification
-	 * @param args   supplied arguments
-	 * @return this
-	 */
-	public MsgBuilder indentNL(String format, Object... args) {
-		nl();
-		indent();
-		sb.append(String.format(format, args));
-		return this;
-	}
-
-	/**
-	 * Append a EOL terminal followed by a tab character and formatted string.
-	 * 
-	 * @param cond   the append enable condition
-	 * @param format the format specification
-	 * @param args   supplied arguments
-	 * @return this
-	 */
-	public MsgBuilder indentNL(boolean cond, String format, Object... args) {
-		if (cond) {
-			nl();
 			indent();
 			sb.append(String.format(format, args));
 		}
@@ -180,4 +120,65 @@ public class MsgBuilder {
 	public String toString() {
 		return sb.toString();
 	}
+
+	// /**
+	// * Append a EOL terminal followed by a formatted string.
+	// *
+	// * @param format the format specification
+	// * @param args supplied arguments
+	// * @return this
+	// */
+	// public MsgBuilder appendNL(String format, Object... args) {
+	// nl();
+	// sb.append(String.format(format, args));
+	// return this;
+	// }
+	//
+	// /**
+	// * Append a EOL terminal followed by a formatted string.
+	// *
+	// * @param cond the append enable condition
+	// * @param format the format specification
+	// * @param args supplied arguments
+	// * @return this
+	// */
+	// public MsgBuilder appendNL(boolean cond, String format, Object... args) {
+	// if (cond) {
+	// nl();
+	// sb.append(String.format(format, args));
+	// }
+	// return this;
+	// }
+
+	// /**
+	// * Append a EOL terminal followed by a tab character and formatted string.
+	// *
+	// * @param format the format specification
+	// * @param args supplied arguments
+	// * @return this
+	// */
+	// public MsgBuilder indentNL(String format, Object... args) {
+	// nl();
+	// indent();
+	// sb.append(String.format(format, args));
+	// return this;
+	// }
+	//
+	// /**
+	// * Append a EOL terminal followed by a tab character and formatted string.
+	// *
+	// * @param cond the append enable condition
+	// * @param format the format specification
+	// * @param args supplied arguments
+	// * @return this
+	// */
+	// public MsgBuilder indentNL(boolean cond, String format, Object... args) {
+	// if (cond) {
+	// nl();
+	// indent();
+	// sb.append(String.format(format, args));
+	// }
+	// return this;
+	// }
+
 }

@@ -9,7 +9,15 @@ import net.certiv.tools.indentguide.util.Utils;
 
 public class Line implements Iterable<Pos> {
 
-	private static final Pattern COMMENT = Pattern.compile("^(\\h*/\\*.*|\\h*\\*(\\h.*|/.*|))$"); // $NON-NLS-1$
+	private static final Pattern COMMENT = Pattern.compile( //
+			"^(?:\\h*(?:" 					// $NON-NLS-1$
+					+ "/\\*.*|"				// $NON-NLS-1$ -> ^'/*'.*$
+					+ " \\*|"				// $NON-NLS-1$ -> ^' *'$
+					+ " \\* .*|"			// $NON-NLS-1$ -> ^' * '.*$
+					+ " \\*/.*|"			// $NON-NLS-1$ -> ^' */'.*$
+					+ " (?:\\*.*)?\\*/" 	// $NON-NLS-1$ -> ^' *'.*'*/'.*$
+					+ "))$" 				// $NON-NLS-1$
+	);
 
 	/** The line number (0..n) */
 	public final int num;

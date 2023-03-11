@@ -1,5 +1,4 @@
 # Ignore certain Eclipse related files
-.classpath
 .settings/
 bin/
 target/

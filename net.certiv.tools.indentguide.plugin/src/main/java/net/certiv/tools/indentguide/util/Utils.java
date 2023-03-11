@@ -2,9 +2,10 @@ package net.certiv.tools.indentguide.util;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
-import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
@@ -32,18 +33,21 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.AbstractTextEditor;
 import org.eclipse.ui.themes.ColorUtil;
 
+import net.certiv.tools.indentguide.adaptors.ContentTypeAdaptor;
 import net.certiv.tools.indentguide.preferences.Pref;
 
 public class Utils {
 
 	public static final char SPC = ' '; // $NON-NLS-1$
+	public static final char DOT = '.'; // $NON-NLS-1$
 	public static final char TAB = '\t'; // $NON-NLS-1$
 	public static final char NLC = '\n'; // $NON-NLS-1$
 	public static final char RET = '\r'; // $NON-NLS-1$
-	public static final String EOL = System.lineSeparator();
+
 	public static final String EMPTY = ""; // $NON-NLS-1$
 	public static final String SPACE = " "; // $NON-NLS-1$
 	public static final String DELIM = "|"; // $NON-NLS-1$
+	public static final String EOL = System.lineSeparator();
 
 	public static final char SP_THIN = '\u2009';	//
 	public static final char SP_MARK = '\u00b7';	// ·
@@ -51,28 +55,91 @@ public class Utils {
 	public static final char RET_MARK = '\u00a4';	// ¤
 	public static final char NL_MARK = '\u00b6';	// ¶
 
+	public static final String UNKNOWN = "Unknown"; // $NON-NLS-1$
+	public static final Class<?>[] NoParams = new Class<?>[0];
+	public static final Object[] NoArgs = new Object[0];
+
 	private static final String EditorsID = "org.eclipse.ui.editors"; //$NON-NLS-1$
 	private static final IEclipsePreferences[] Scopes = new IEclipsePreferences[] {
 			InstanceScope.INSTANCE.getNode(EditorsID), //
 			DefaultScope.INSTANCE.getNode(EditorsID) //
 	};
 
-	public static final Class<?>[] NoParams = null;
-	public static final Object[] NoArgs = null;
-
 	private static Set<IContentType> platformTextTypes;
+	private static IContentType txtType;
 
 	private Utils() {}
 
+	/** Returns the class name of the given object, or {@code UNKNOWN} if {@code null}. */
+	public static String nameOf(Object obj) {
+		return nameOf(obj, UNKNOWN);
+	}
+
+	/** Returns the class name of the given object, or the given default if {@code null}. */
+	public static String nameOf(Object obj, String def) {
+		return obj != null ? obj.getClass().getName() : def;
+	}
+
+	/**
+	 * Invoke the method corresponding to the given method name having no parameters on the given
+	 * target object. The method may be private. Invokes the first matching method found in the
+	 * class hierarchy of the given target.
+	 *
+	 * @param <T>    the return object type
+	 * @param target the invocation target object
+	 * @param name   the method name
+	 * @return the invocation result
+	 * @throws Throwable on any failure
+	 */
 	public static <T> T invoke(Object target, String methodName) throws Throwable {
 		return invoke(target, methodName, NoParams, NoArgs);
 	}
 
+	/**
+	 * Invoke the method corresponding to the given method name and parameter types on the given
+	 * target object. The method may be private. Invokes the first matching method found in the
+	 * class hierarchy of the given target.
+	 *
+	 * @param <T>    the return object type
+	 * @param target the invocation target object
+	 * @param name   the method name
+	 * @param params the method parameter types
+	 * @param args   the method parameter arguments
+	 * @return the invocation result
+	 * @throws Throwable on any failure
+	 */
 	@SuppressWarnings("unchecked")
-	public static <T> T invoke(Object target, String methodName, Class<?>[] params, Object[] args) throws Throwable {
-		Method m = target.getClass().getMethod(methodName, params);
+	public static <T> T invoke(Object target, String name, Class<?>[] params, Object[] args) throws Throwable {
+		Class<?> cls = find(target.getClass(), name, params);
+		Method m = cls.getDeclaredMethod(name, params);
 		m.setAccessible(true);
 		return (T) m.invoke(target, args);
+	}
+
+	/**
+	 * Finds the Class (the given class or a superclass thereof) that declares a method with the
+	 * given name and parameter types.
+	 *
+	 * @param from   the initial class to consider
+	 * @param name   the target method name
+	 * @param params the target method parameter types
+	 * @return the Class that declares a method with the given name and parameter types, or
+	 *         {@code null} if not found
+	 */
+	public static Class<?> find(Class<?> from, String name, Class<?>[] params) {
+		Class<?> cls = from;
+		while (cls != null) {
+			Method[] methods = cls.getDeclaredMethods();
+			for (Method method : methods) {
+				if (method.getName().equals(name)) {
+					if (Arrays.equals(method.getParameterTypes(), params)) {
+						return cls;
+					}
+				}
+			}
+			cls = cls.getSuperclass();
+		}
+		return null;
 	}
 
 	/** Restrict the range of the given val to between -1 and 1. */
@@ -93,7 +160,6 @@ public class Utils {
 					break;
 				case TAB:
 					sb.append(TAB_MARK);
-					// sb.append(SP_THIN);
 					break;
 				case RET:
 					sb.append(RET_MARK);
@@ -173,18 +239,59 @@ public class Utils {
 	}
 
 	/**
-	 * Returns the text content type identifiers known to the platform at plugin startup.
+	 * Returns the text content types known to the platform at plugin startup. Includes an 'UNKNOWN'
+	 * placeholder entry for unknown/undefined content types
 	 *
 	 * @return the known text content type identifiers
 	 */
 	public static Set<IContentType> platformTextTypes() {
 		if (platformTextTypes == null) {
 			IContentTypeManager mgr = Platform.getContentTypeManager();
-			IContentType txtType = mgr.getContentType(IContentTypeManager.CT_TEXT);
+			IContentType txtType = getPlatformTextType();
 			platformTextTypes = Stream.of(mgr.getAllContentTypes()).filter(t -> t.isKindOf(txtType))
 					.collect(Collectors.toCollection(LinkedHashSet::new));
+
+			// add a limited placeholder entry for unknown/undefined content types
+			platformTextTypes.add(ContentTypeAdaptor.unknown(txtType));
+
+			// make immutable
+			platformTextTypes = Collections.unmodifiableSet(platformTextTypes);
 		}
 		return platformTextTypes;
+	}
+
+	/**
+	 * Returns the well-defined platform text content type.
+	 *
+	 * @return the text content type
+	 */
+	public static IContentType getPlatformTextType() {
+		if (txtType == null) {
+			IContentTypeManager mgr = Platform.getContentTypeManager();
+			txtType = mgr.getContentType(IContentTypeManager.CT_TEXT);
+		}
+		return txtType;
+	}
+
+	/**
+	 * Returns the platform text content type matching the given type identifier.
+	 *
+	 * @return the text content type for the given identifier, or {@code null} if not found
+	 */
+	public static IContentType getPlatformTextType(String id) {
+		return platformTextTypes().stream().filter(t -> t.getId().equals(id)).findFirst().orElse(null);
+	}
+
+	/**
+	 * Returns the platform text content types matching the given type identifiers.
+	 *
+	 * @return set of text content types for the given identifiers
+	 */
+	public static Set<IContentType> getPlatformTextType(Set<String> ids) {
+		return ids.stream() //
+				.map(id -> getPlatformTextType(id)) //
+				.filter(Objects::nonNull) //
+				.collect(Collectors.toUnmodifiableSet());
 	}
 
 	/**
@@ -215,8 +322,8 @@ public class Utils {
 	 * @param delimited a delimited string of preference terms
 	 * @return set containing the individual terms
 	 */
-	public static Set<String> undelimit(String delimited) {
-		Set<String> types = new LinkedHashSet<>();
+	public static LinkedHashSet<String> undelimit(String delimited) {
+		LinkedHashSet<String> types = new LinkedHashSet<>();
 		StringTokenizer tokens = new StringTokenizer(delimited, DELIM);
 		while (tokens.hasMoreTokens()) {
 			types.add(tokens.nextToken());
@@ -230,7 +337,7 @@ public class Utils {
 	 * @param array the source array to convert
 	 * @return a list containing the array elements
 	 */
-	public static <T> List<T> toList(T[] array) {
+	public static <T> LinkedList<T> toList(T[] array) {
 		return Arrays.stream(array).collect(Collectors.toCollection(LinkedList::new));
 	}
 
@@ -240,7 +347,7 @@ public class Utils {
 	 * @param array the source array to convert
 	 * @return a set containing the array elements
 	 */
-	public static <T> Set<T> toSet(T[] array) {
+	public static <T> LinkedHashSet<T> toSet(T[] array) {
 		return Arrays.stream(array).collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
@@ -249,8 +356,8 @@ public class Utils {
 	 * <p>
 	 * [0,1,2], [1,2,3] -> [0]
 	 */
-	public static <T> Set<T> subtract(Set<T> a, Set<T> b) {
-		Set<T> res = new LinkedHashSet<>(a);
+	public static <T> LinkedHashSet<T> subtract(Set<T> a, Set<T> b) {
+		LinkedHashSet<T> res = new LinkedHashSet<>(a);
 		res.removeAll(b);
 		return res;
 	}
@@ -260,35 +367,49 @@ public class Utils {
 	 * <p>
 	 * [0,1,2], [1,2,3] -> [0,3]
 	 */
-	public static <T> Set<T> disjoint(Set<T> a, Set<T> b) {
-		Set<T> res = new LinkedHashSet<>();
+	public static <T> LinkedHashSet<T> disjoint(Set<T> a, Set<T> b) {
+		LinkedHashSet<T> res = new LinkedHashSet<>();
 		res.addAll(subtract(a, b));
 		res.addAll(subtract(b, a));
 		return res;
 	}
 
-	/**
-	 * Returns the delta between an initial set A and later set B.
-	 * <p>
-	 * [0,1,2], [1,2,3] -> added [3] & removed [0]
-	 */
-	public static <T> Delta<T> delta(Set<T> before, Set<T> after) {
-		return new Delta<>(subtract(after, before), subtract(before, after));
-	}
-
 	public static class Delta<T> {
 
-		public Set<T> added;
-		public Set<T> rmved;
+		public final Set<T> added;
+		public final Set<T> rmved;
 
-		public Delta(Set<T> added, Set<T> rmved) {
-			this.added = added;
-			this.rmved = rmved;
+		/**
+		 * Computes the delta between a prior set A and later set B.
+		 * <p>
+		 * [0,1,2], [1,2,3] -> added [3] & removed [0]
+		 *
+		 * @param prior the relatively earlier state set
+		 * @param later the relatively later state set
+		 * @return the delta between the prior set A and later set B
+		 */
+		public static <T> Delta<T> of(Set<T> prior, Set<T> later) {
+			return new Delta<>(subtract(later, prior), subtract(prior, later));
 		}
 
-		/** Returns {@code true} if both added and removed sets are empty. */
-		public boolean isEmpty() {
-			return added.isEmpty() & rmved.isEmpty();
+		private Delta(Set<T> added, Set<T> rmved) {
+			this.added = Collections.unmodifiableSet(added);
+			this.rmved = Collections.unmodifiableSet(rmved);
+		}
+
+		/** Returns {@code true} if either added or removed set is non-empty. */
+		public boolean changed() {
+			return increased() || decreased();
+		}
+
+		/** Returns {@code true} if the added set is non-empty. */
+		public boolean increased() {
+			return !added.isEmpty();
+		}
+
+		/** Returns {@code true} if the removed set is non-empty. */
+		public boolean decreased() {
+			return !rmved.isEmpty();
 		}
 	}
 
@@ -302,9 +423,9 @@ public class Utils {
 	public static boolean setAdvanced(StyledText widget) {
 		GC gc = new GC(widget);
 		gc.setAdvanced(true);
-		boolean advanced = gc.getAdvanced();
+		boolean adv = gc.getAdvanced();
 		gc.dispose();
-		return advanced;
+		return adv;
 	}
 
 	public static Color getColor(IPreferenceStore store) {

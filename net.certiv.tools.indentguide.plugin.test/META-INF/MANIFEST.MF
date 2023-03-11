@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: tychotest.test
+Bundle-Vendor: tychotest
+Bundle-SymbolicName: net.certiv.tools.indentguide.plugin.test
+Bundle-Version: 2.1.0.qualifier
+Fragment-Host: net.certiv.tools.indentguide;bundle-version="2.1.0.qualifier"
+Bundle-RequiredExecutionEnvironment: JavaSE-11
+Require-Bundle: junit-jupiter-api
+Automatic-Module-Name: tychotest.test

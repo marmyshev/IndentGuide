@@ -35,7 +35,7 @@ public class Activator extends AbstractUIPlugin {
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
 		plugin = this;
-		log("Startup");
+		log("Starting...");
 	}
 
 	@Override
@@ -44,15 +44,31 @@ public class Activator extends AbstractUIPlugin {
 		super.stop(context);
 	}
 
-	public static void log(String fmt, Object... args) {
-		plugin.getLog().log(new Status(IStatus.INFO, PLUGIN_ID, PREFIX + String.format(fmt, args)));
-	}
-
-	public static void log(MsgBuilder mb) {
-		plugin.getLog().log(new Status(IStatus.INFO, PLUGIN_ID, PREFIX + mb.toString()));
-	}
+	// ------------------------------------------
 
 	public static void log(Throwable e) {
 		plugin.getLog().log(new Status(IStatus.ERROR, PLUGIN_ID, e.getMessage()));
+	}
+
+	public static void log(String fmt, Object... args) {
+		String msg = print(PREFIX + String.format(fmt, args));
+		plugin.getLog().log(new Status(IStatus.INFO, PLUGIN_ID, msg));
+	}
+
+	public static void log(MsgBuilder mb) {
+		String msg = print(PREFIX + mb.toString());
+		plugin.getLog().log(new Status(IStatus.INFO, PLUGIN_ID, msg));
+	}
+
+	private static String print(String msg) {
+		StackTraceElement caller = Thread.currentThread().getStackTrace()[3];
+		return info(caller.getClassName(), caller.getLineNumber(), msg);
+	}
+
+	private static String info(String clsname, int line, String msg) {
+		if (clsname.startsWith(PLUGIN_ID)) {
+			clsname = clsname.substring(PLUGIN_ID.length() + 1);
+		}
+		return String.format("%s:%s \t%s", clsname, line, msg);
 	}
 }

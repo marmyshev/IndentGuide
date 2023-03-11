@@ -8,7 +8,8 @@
  *****************************************************************************/
 package net.certiv.tools.indentguide;
 
-import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
@@ -23,6 +24,7 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.ITextViewerExtension2;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IStartup;
@@ -50,43 +52,17 @@ import net.certiv.tools.indentguide.util.Utils.Delta;
 
 public class Starter implements IStartup {
 
-	private static final String UNKNOWN = "Unknown"; // $NON-NLS-1$
-
 	private static final String ACTIVE_EDITOR = "getActiveEditor"; // $NON-NLS-1$
 	private static final String SOURCE_VIEWER = "getSourceViewer"; // $NON-NLS-1$
 
 	private IPreferenceStore store;
-	private Set<String> excludedTypeIds;	// excluded content types
+	private Set<String> excludedTypeIds;	// excluded content type ids
 
-	// row=window; col=page/editor; val=painter
-	private HashMap<IWorkbenchPart, HashMap<ISourceViewer, GuidePainter>> paintMap = new HashMap<>();
+	// value=unique data records
+	private final LinkedHashSet<Data> datas = new LinkedHashSet<>();
 
-	private final IPropertyChangeListener propsListener = evt -> {
-		String prop = evt.getProperty();
-		Object old = evt.getOldValue();
-		Object cur = evt.getNewValue();
-
-		if (prop.equals(IThemeManager.CHANGE_CURRENT_THEME)) {
-			Activator.log("theme change '%s' [%s] => [%s]", prop, old, cur);
-			loadPaintPrefs();
-
-		} else if (prop.startsWith(Pref.KEY)) {
-			if (prop.equals(Pref.CONTENT_TYPES)) {
-				updateContentTypes();
-
-				Delta<String> delta = Utils.delta(Utils.undelimit((String) old), Utils.undelimit((String) cur));
-				MsgBuilder mb = new MsgBuilder("content type change [%s]", prop);
-				if (!delta.added.isEmpty()) mb.nl().indent("added   [%s]", delta.added);
-				if (!delta.rmved.isEmpty()) mb.nl().indent("removed [%s]", delta.rmved);
-				Activator.log(mb.toString());
-
-			} else {
-				Activator.log("property change '%s' [%s] => [%s]", prop, old, cur);
-			}
-
-			loadPaintPrefs();
-		}
-	};
+	private final PartWatcher partWatcher = new PartWatcher();
+	private final PropWatcher propWatcher = new PropWatcher();
 
 	@Override
 	public void earlyStartup() {
@@ -94,134 +70,162 @@ public class Starter implements IStartup {
 
 			@Override
 			public IStatus runInUIThread(IProgressMonitor monitor) {
-				PlatformUI.getWorkbench().getThemeManager().addPropertyChangeListener(propsListener);
+				IWorkbench wb = PlatformUI.getWorkbench();
+				wb.getThemeManager().addPropertyChangeListener(propWatcher);
 				store = Activator.getDefault().getPreferenceStore();
-				store.addPropertyChangeListener(propsListener);
+				store.addPropertyChangeListener(propWatcher);
+
 				updateContentTypes();
+				initWorkbenchWindows();
 
-				IWorkbench workbench = PlatformUI.getWorkbench();
-				for (IWorkbenchWindow window : workbench.getWorkbenchWindows()) {
-					initWorkbenchWindow(window);
-				}
-
-				workbench.addWindowListener(new WindowWatcher());
+				wb.addWindowListener(new WindowWatcher());
 				return Status.OK_STATUS;
 			}
 		};
 		job.setPriority(Job.SHORT);
 		job.setSystem(true);
-		job.schedule();
+		job.schedule(200);
+	}
+
+	private void initWorkbenchWindows() {
+		IWorkbench wb = PlatformUI.getWorkbench();
+		for (IWorkbenchWindow window : wb.getWorkbenchWindows()) {
+			initWorkbenchWindow(window);
+			window.getPartService().addPartListener(partWatcher);
+		}
 	}
 
 	private void initWorkbenchWindow(IWorkbenchWindow window) {
-		if (window != null) {
-			IWorkbenchPage page = window.getActivePage();
-			if (page != null) {
-				IWorkbenchPart part = page.getActivePart();
-				Activator.log("workbench page [%s]", name(part));
-
-				if (part instanceof MultiPageEditorPart) {
-					IEditorPart editor = activeEditor((MultiPageEditorPart) part);
-					if (editor != null) installPainter(editor, part);
-
-				} else {
-					IEditorPart editor = page.getActiveEditor();
-					if (editor != null) installPainter(editor, part);
-				}
+		for (IWorkbenchPage page : window.getPages()) {
+			IWorkbenchPart part = page.getActivePart();
+			if (part instanceof MultiPageEditorPart || part instanceof AbstractTextEditor) {
+				installPainter(part);
 			}
-			window.getPartService().addPartListener(new PartWatcher());
 		}
 	}
 
-	private void installPainter(IEditorPart part, IWorkbenchPart window) {
+	private void installPainter(IWorkbenchPart part) {
 		if (!store.getBoolean(Pref.ENABLED)) return;
 
-		if (part instanceof AbstractTextEditor) {
-			AbstractTextEditor editor = (AbstractTextEditor) part;
-			Activator.log("inspecting editor [%s]", name(part));
+		AbstractTextEditor editor = activeEditor(part);
+		if (editor == null) return;
 
-			if (!validType(editor)) return;
-
-			Class<?> cls = editor.getClass();
-			while (!cls.equals(AbstractTextEditor.class)) {
-				cls = cls.getSuperclass();
-			}
-
-			try {
-				ISourceViewer viewer = Utils.invoke(cls, SOURCE_VIEWER);
-
-				if (viewer instanceof ITextViewerExtension2) {
-					HashMap<ISourceViewer, GuidePainter> painters = paintMap.get(window);
-					if (painters == null) painters = new HashMap<>();
-					if (!painters.containsKey(viewer)) {
-						GuidePainter painter = new GuidePainter(viewer);
-						painters.put(viewer, painter);
-
-						((ITextViewerExtension2) viewer).addPainter(painter);
-						Activator.log("painter installed");
-					}
-					paintMap.put(window, painters);
-				}
-			} catch (Throwable e) {
-				Activator.log(e);
-			}
-		}
-	}
-
-	private IEditorPart activeEditor(MultiPageEditorPart mpe) {
-		if (mpe instanceof FormEditor) {
-			return ((FormEditor) mpe).getActiveEditor();
-		}
+		IContentType type = typeOf(editor);
+		boolean valid = valid(type);
+		Activator.log("painter %sallowed for '%s' [%s]", valid ? "" : "dis", srcname(editor), type.getName());
+		if (!valid) return;
 
 		try {
-			return Utils.invoke(mpe, ACTIVE_EDITOR);
+			ISourceViewer viewer = Utils.invoke(editor, SOURCE_VIEWER);
+
+			if (viewer instanceof ITextViewerExtension2) {
+				Data data = findRecord(part, editor);
+				if (data == null) {
+					data = new Data(part, editor, type, viewer);
+					datas.add(data);
+				}
+				if (data.painter == null) {
+					data.painter = new GuidePainter(viewer);
+					((ITextViewerExtension2) viewer).addPainter(data.painter);
+					Activator.log("painter installed");
+				}
+
+			} else {
+				Activator.log("painter not installable in viewer [%s]", Utils.nameOf(viewer));
+			}
 
 		} catch (Throwable e) {
 			Activator.log(e);
-			return null;
 		}
 	}
 
-	private boolean validType(AbstractTextEditor editor) {
-		IEditorInput src = editor.getEditorInput();
-		String srcname = src != null ? src.getName() : UNKNOWN;
-		IContentType type = null;
+	private AbstractTextEditor activeEditor(IWorkbenchPart part) {
+		IEditorPart editor = null;
 
+		if (part instanceof FormEditor) {
+			editor = ((FormEditor) part).getActiveEditor();
+
+		} else if (part instanceof MultiPageEditorPart) {
+			try {
+				editor = Utils.invoke(part, ACTIVE_EDITOR);
+			} catch (Throwable e) {
+				Activator.log(e);
+			}
+
+		} else if (part instanceof IEditorPart) {
+			editor = (IEditorPart) part;
+		}
+
+		return (editor instanceof AbstractTextEditor) ? (AbstractTextEditor) editor : null;
+	}
+
+	private Data findRecord(IWorkbenchPart part, AbstractTextEditor editor) {
+		return datas.stream() //
+				.filter(d -> d.part.equals(part) && d.editor.equals(editor)) //
+				.findFirst() //
+				.orElse(null);
+	}
+
+	private boolean valid(IContentType type) {
+		if (type == null) return false;
+		return !excludedTypeIds.contains(type.getId());
+	}
+
+	private IContentType typeOf(AbstractTextEditor editor) {
 		IDocumentProvider provider = editor.getDocumentProvider();
 		if (provider instanceof IDocumentProviderExtension4) {
 			try {
-				type = ((IDocumentProviderExtension4) provider).getContentType(src);
+				IContentType type = ((IDocumentProviderExtension4) provider).getContentType(editor.getEditorInput());
+				if (type != null) return type;
 			} catch (CoreException e) {
 				Activator.log(e);
 			}
 		}
+		return Utils.getPlatformTextType(Utils.UNKNOWN);
+	}
 
-		if (type == null) {
-			Activator.log("painter disallowed for '%s' [%s]", srcname, UNKNOWN);
-			return false;
-		}
-		if (!excludedTypeIds.contains(type.getId())) {
-			Activator.log("installing painter on '%s' [%s]", srcname, type.getName());
-			return true;
-		}
-
-		Activator.log("painter disallowed for '%s' [%s]", srcname, type.getName());
-		return false;
+	private String srcname(AbstractTextEditor editor) {
+		IEditorInput src = editor.getEditorInput();
+		return src != null ? src.getName() : Utils.UNKNOWN;
 	}
 
 	private void updateContentTypes() {
 		excludedTypeIds = Utils.undelimit(store.getString(Pref.CONTENT_TYPES));
 	}
 
-	private String name(IWorkbenchPart part) {
-		return part.getClass().getName();
+	private void refreshAll() {
+		Activator.log("refreshAll...");
+		for (Data d : datas) {
+			if (d.painter != null) {
+				d.painter.loadPrefs();
+				d.painter.redrawAll();
+			}
+		}
 	}
 
-	private void loadPaintPrefs() {
-		for (HashMap<ISourceViewer, GuidePainter> map : paintMap.values()) {
-			for (GuidePainter painter : map.values()) {
-				painter.loadPrefs();
-				painter.redrawAll();
+	private void deactivate(IWorkbenchPart part) {
+		AbstractTextEditor editor = activeEditor(part);
+		Data d = findRecord(part, editor);
+		if (d != null && d.painter != null) {
+			((ITextViewerExtension2) d.viewer).removePainter(d.painter);
+			d.painter = null;
+		}
+	}
+
+	private void deactivate(Set<IContentType> types) {
+		for (Data d : datas) {
+			if (types.contains(d.type) && d.painter != null) {
+				((ITextViewerExtension2) d.viewer).removePainter(d.painter);
+				d.painter = null;
+			}
+		}
+	}
+
+	private void deactivateAll() {
+		for (Data d : datas) {
+			if (d.painter != null) {
+				((ITextViewerExtension2) d.viewer).removePainter(d.painter);
+				d.painter = null;
 			}
 		}
 	}
@@ -239,14 +243,9 @@ public class Starter implements IStartup {
 		@Override
 		public void partOpened(IWorkbenchPartReference ref) {
 			IWorkbenchPart part = ref.getPart(false);
-			Activator.log("part opened '%s'", name(part));
-
-			if (part instanceof MultiPageEditorPart) {
-				IEditorPart editor = activeEditor((MultiPageEditorPart) part);
-				if (editor != null) installPainter(editor, part);
-
-			} else if (part instanceof IEditorPart) {
-				installPainter((IEditorPart) part, part);
+			if (part instanceof MultiPageEditorPart || part instanceof AbstractTextEditor) {
+				installPainter(part);
+				Activator.log("part opened '%s'", Utils.nameOf(part));
 			}
 		}
 
@@ -254,28 +253,99 @@ public class Starter implements IStartup {
 		public void partClosed(IWorkbenchPartReference ref) {
 			IWorkbenchPart part = ref.getPart(false);
 			if (part instanceof MultiPageEditorPart || part instanceof AbstractTextEditor) {
-				HashMap<ISourceViewer, GuidePainter> painters = paintMap.remove(part);
-				if (painters != null) {
-					for (GuidePainter painter : painters.values()) {
-						painter.deactivate(true);
-					}
-					painters.clear();
-				}
-				Activator.log("part closed '%s'", name(part));
+				deactivate(part);
+				Activator.log("part closed '%s'", Utils.nameOf(part));
 			}
 		}
 
 		@Override
-		public void pageChanged(PageChangedEvent event) {
-			IPageChangeProvider provider = event.getPageChangeProvider();
+		public void pageChanged(PageChangedEvent evt) {
+			IPageChangeProvider provider = evt.getPageChangeProvider();
 			if (provider instanceof MultiPageEditorPart) {
-				Activator.log("MultiPageEditor page change '%s'", name((IWorkbenchPart) provider));
-
-				IEditorPart editor = activeEditor((MultiPageEditorPart) provider);
-				if (editor != null) {
-					installPainter(editor, (IWorkbenchPart) provider);
-				}
+				Activator.log("MultiPageEditor page change '%s'", Utils.nameOf(provider));
+				installPainter((IWorkbenchPart) provider);
 			}
+		}
+	}
+
+	private class PropWatcher implements IPropertyChangeListener {
+
+		@Override
+		public void propertyChange(PropertyChangeEvent evt) {
+			String prop = evt.getProperty();
+			Object old = evt.getOldValue();
+			Object now = evt.getNewValue();
+
+			if (prop.equals(IThemeManager.CHANGE_CURRENT_THEME)) {
+				Activator.log("theme change '%s' [%s] => [%s]", prop, old, now);
+				refreshAll();
+
+			} else if (prop.startsWith(Pref.KEY)) {
+				if (prop.equals(Pref.ENABLED)) {
+					Activator.log("status change '%s' [%s] => [%s]", prop, old, now);
+					if ((boolean) now) {
+						initWorkbenchWindows();
+
+					} else {
+						deactivateAll();
+					}
+
+				} else if (prop.equals(Pref.CONTENT_TYPES)) {
+					updateContentTypes();
+
+					// Note: logic is reversed because it is an exclusion list
+					Delta<String> delta = Delta.of(Utils.undelimit((String) now), Utils.undelimit((String) old));
+					if (delta.changed()) {
+						MsgBuilder mb = new MsgBuilder("content type change [%s]", prop);
+
+						if (delta.increased()) {
+							initWorkbenchWindows();
+							mb.nl().indent("enabled  [%s]", delta.added);
+						}
+
+						if (delta.decreased()) {
+							mb.nl().indent("disabled [%s]", delta.rmved);
+							deactivate(Utils.getPlatformTextType(delta.rmved));
+						}
+
+						Activator.log(mb.toString());
+					}
+
+				} else {
+					Activator.log("property change '%s' [%s] => [%s]", prop, old, now);
+				}
+
+				refreshAll();
+			}
+		}
+	}
+
+	private class Data {
+		IWorkbenchPart part;
+		AbstractTextEditor editor;
+		IContentType type;
+		ISourceViewer viewer;
+		GuidePainter painter;
+	
+		Data(IWorkbenchPart part, AbstractTextEditor editor, IContentType type, ISourceViewer viewer) {
+			this.part = part;
+			this.editor = editor;
+			this.type = type;
+			this.viewer = viewer;
+		}
+	
+		@Override
+		public int hashCode() {
+			return Objects.hash(part, editor);
+		}
+	
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) return true;
+			if (obj == null) return false;
+			if (getClass() != obj.getClass()) return false;
+			Data d = (Data) obj;
+			return Objects.equals(part, d.part) && Objects.equals(editor, d.editor);
 		}
 	}
 }

@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.content.IContentType;
-import org.eclipse.core.runtime.content.IContentTypeManager;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.preference.ColorFieldEditor;
@@ -38,17 +37,19 @@ import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import net.certiv.tools.indentguide.Activator;
 import net.certiv.tools.indentguide.util.Utils;
-import net.certiv.tools.indentguide.util.Utils.Delta;
 
 public class GuidePage extends PreferencePage implements IWorkbenchPreferencePage {
 
-	private static final String[] STYLES = { Messages.style_solid, Messages.style_dash, Messages.style_dot,
-			Messages.style_dash_dot, Messages.style_dash_dot_dot };
+	private static final String[] STYLES = { //
+			Messages.style_solid, //
+			Messages.style_dash, //
+			Messages.style_dot, //
+			Messages.style_dash_dot, //
+			Messages.style_dash_dot_dot //
+	};
 
 	private final List<Composite> blocks = new LinkedList<>();
 	private final List<Object> parts = new LinkedList<>();
-
-	private final IContentTypeManager mgr;
 
 	// platform 'text' content type
 	private final IContentType txtType;
@@ -59,11 +60,12 @@ public class GuidePage extends PreferencePage implements IWorkbenchPreferencePag
 	public GuidePage() {
 		setPreferenceStore(Activator.getDefault().getPreferenceStore());
 
-		mgr = Platform.getContentTypeManager();
-		txtType = mgr.getContentType(IContentTypeManager.CT_TEXT);
+		txtType = Utils.getPlatformTextType();
 
 		Set<String> exclude = Utils.undelimit(getPreferenceStore().getString(Pref.CONTENT_TYPES));
-		excludeTypes = exclude.stream().map(e -> mgr.getContentType(e)).filter(t -> !t.equals(txtType))
+		excludeTypes = exclude.stream() //
+				.map(e -> Utils.getPlatformTextType(e)) //
+				.filter(t -> !t.equals(txtType)) //
 				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
@@ -100,7 +102,6 @@ public class GuidePage extends PreferencePage implements IWorkbenchPreferencePag
 						control.setEnabled(active);
 					}
 				}
-				// TODO: call #redrawAll on guide painter(s)
 			}
 		});
 		createVerticalSpacer(comp, 1);
@@ -138,10 +139,10 @@ public class GuidePage extends PreferencePage implements IWorkbenchPreferencePag
 		viewer.setContentProvider(new TypesContentProvider());
 		viewer.setLabelProvider(new TypesLabelProvider());
 		viewer.setComparator(new ViewerComparator());
-		viewer.setInput(Platform.getContentTypeManager());
 		viewer.addFilter(new TextTypeFilter());
+		viewer.setInput(Platform.getContentTypeManager());
 
-		viewer.expandAll(); // force viewer internal state update
+		viewer.expandAll(); // req'd to force viewer internal state update
 		viewer.collapseAll();
 		viewer.expandToLevel(2);
 
@@ -288,7 +289,6 @@ public class GuidePage extends PreferencePage implements IWorkbenchPreferencePag
 				for (Object type : Utils.platformTextTypes()) {
 					if (!viewer.getChecked(type)) {
 						viewer.setChecked(type, true);
-						// viewer.setGrayed(type, false);
 					}
 				}
 			}
@@ -323,17 +323,7 @@ public class GuidePage extends PreferencePage implements IWorkbenchPreferencePag
 
 			} else if (part instanceof CheckboxTreeViewer) {
 				CheckboxTreeViewer viewer = (CheckboxTreeViewer) part;
-				Set<IContentType> unchecked = getUnChecked(viewer);
-
-				Delta<IContentType> delta = Utils.delta(excludeTypes, unchecked);
-				if (!delta.added.isEmpty()) {
-					Activator.log("content types excluded: %s", delta.added);
-				}
-				if (!delta.rmved.isEmpty()) {
-					Activator.log("content types restored: %s", delta.rmved);
-				}
-
-				excludeTypes = unchecked;
+				excludeTypes = getUnChecked(viewer);
 				store.setValue(Pref.CONTENT_TYPES, Utils.delimitTypes(excludeTypes));
 			}
 		}
@@ -416,15 +406,13 @@ public class GuidePage extends PreferencePage implements IWorkbenchPreferencePag
 
 	private class TypesContentProvider implements ITreeContentProvider {
 
-		private IContentTypeManager mgr;
-
 		@Override
 		public Object[] getChildren(Object parent) {
 			List<IContentType> elements = new ArrayList<>();
 			IContentType base = (IContentType) parent;
-			for (IContentType type : mgr.getAllContentTypes()) {
-				if (Objects.equals(type.getBaseType(), base) && type.isKindOf(txtType)) {
-					elements.add(type); // constrained to text content types
+			for (IContentType type : Utils.platformTextTypes()) {
+				if (Objects.equals(type.getBaseType(), base)) {
+					elements.add(type);
 				}
 			}
 			return elements.toArray(new IContentType[0]);
@@ -447,8 +435,6 @@ public class GuidePage extends PreferencePage implements IWorkbenchPreferencePag
 		}
 
 		@Override
-		public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-			mgr = (IContentTypeManager) newInput;
-		}
+		public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {}
 	}
 }
