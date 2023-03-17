@@ -2,7 +2,7 @@
 <feature
       id="net.certiv.tools.indentguide.feature"
       label="IndentGuide"
-      version="2.1.0.qualifier"
+      version="2.2.0.qualifier"
       provider-name="Certiv Analytis">
 
    <description>
@@ -43,14 +43,14 @@ SOFTWARE.
    </url>
 
    <requires>
-      <import plugin="org.eclipse.ui" version="3.201.200" match="compatible"/>
-      <import plugin="org.eclipse.core.runtime" version="3.26.100" match="compatible"/>
-      <import plugin="org.eclipse.jface.text" version="3.22.0" match="compatible"/>
-      <import plugin="org.eclipse.ui.workbench.texteditor" version="3.16.600" match="compatible"/>
-      <import plugin="org.eclipse.e4.core.services" version="2.3.400" match="compatible"/>
-      <import plugin="org.eclipse.e4.ui.css.swt.theme" version="0.13.200" match="compatible"/>
-      <import plugin="org.eclipse.osgi.services" version="3.11.100" match="compatible"/>
-      <import plugin="org.eclipse.ui.forms" version="3.11.500" match="compatible"/>
+      <import plugin="org.eclipse.core.runtime" version="3.24.100" match="compatible"/>
+      <import plugin="org.eclipse.e4.core.services" version="2.3.100" match="compatible"/>
+      <import plugin="org.eclipse.e4.ui.css.swt.theme" version="0.13.0" match="compatible"/>
+      <import plugin="org.eclipse.jface.text" version="3.20.0" match="compatible"/>
+      <import plugin="org.eclipse.osgi.services" version="3.10.200" match="compatible"/>
+      <import plugin="org.eclipse.ui" version="3.201.0" match="compatible"/>
+      <import plugin="org.eclipse.ui.forms" version="3.11.300" match="compatible"/>
+      <import plugin="org.eclipse.ui.workbench.texteditor" version="3.16.400" match="compatible"/>
    </requires>
 
    <plugin

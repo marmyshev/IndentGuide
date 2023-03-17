@@ -151,6 +151,8 @@ public class GuidePainter implements IPainter, PaintListener {
 		StyledTextContent content = widget.getContent();
 
 		Line prevNb = null; // last non-blank line
+		Line prevLn = null; // immediately prior line
+		Line currLn = null; // current line
 		Line nextNb = null; // next non-blank line
 
 		for (int line = begLine; line <= endLine; line++) {
@@ -159,37 +161,40 @@ public class GuidePainter implements IPainter, PaintListener {
 
 			if (!Utils.isFolded(viewer, docLine)) {
 				String text = widget.getLine(line);
-				Line ln = new Line(docLine, text, tabWidth);
+				prevLn = prevLine(docLine, tabWidth, currLn);
+				currLn = new Line(docLine, text, tabWidth);
 
 				if (drawBlankLn) {
-					if (ln.blank) {
+					if (currLn.blank) {
 						prevNb = prevNonblankLine(prevNb, docLine, tabWidth);
 						nextNb = nextNonblankLine(nextNb, docLine, tabWidth);
 						// log(ln.dir, prevNb, ln, nextNb);
 
 						// change in dents: - <-> +
-						ln.delta = nextNb.tabs() - prevNb.tabs();
+						currLn.delta = nextNb.tabs() - prevNb.tabs();
 
-						ln.stops.clear();
-						ln.stops.addAll(nextNb.stops); // default: same as next non-blank line
-						if (ln.delta > 0 && ln.tabs() > 1) ln.stops.removeLast(); // shift in
+						currLn.stops.clear();
+						currLn.stops.addAll(nextNb.stops); // default: same as next non-blank line
+						if (currLn.delta > 0 && currLn.tabs() > 1) {
+							currLn.stops.removeLast(); // shift in
+						}
 
 					} else {
-						prevNb = ln;
+						prevNb = currLn;
 					}
 				}
 
-				boolean nest = ln.tabs() > 1;
-				boolean only = ln.tabs(1);
-				boolean zero = ln.delta == 0;
+				boolean nest = currLn.tabs() > 1;
+				boolean only = currLn.tabs(1);
+				boolean zero = currLn.delta == 0;
 
-				for (Pos stop : ln.stops) {
-					boolean first = stop == ln.stops.peekFirst();
-					boolean last = stop == ln.stops.peekLast();
+				for (Pos stop : currLn.stops) {
+					boolean first = stop == currLn.stops.peekFirst();
+					boolean last = stop == currLn.stops.peekLast();
 
-					if (ln.comment) {
+					if (currLn.comment) {
 						// skip first visible character
-						if (stop.col == ln.beg) continue;
+						if (stop.col == currLn.beg) continue;
 
 						// skip first where only unless drawComment or drawLeadEdge
 						if (only && !(drawComment || drawLeadEdge)) continue;
@@ -200,7 +205,7 @@ public class GuidePainter implements IPainter, PaintListener {
 						// skip last where !only unless drawComment
 						if (last && !only && !drawComment) continue;
 
-					} else if (ln.blank) {
+					} else if (currLn.blank) {
 						// skip first where only and zero
 						if (first && only && zero) continue;
 
@@ -215,17 +220,30 @@ public class GuidePainter implements IPainter, PaintListener {
 
 					} else {
 						// skip first visible character
-						if (stop.col == ln.beg) continue;
+						if (stop.col == currLn.beg) continue;
 
 						// skip first unless drawLeadEdge
 						if (first && !drawLeadEdge) continue;
 					}
 
-					draw(gc, offset, stop.col, spcWidth);
+					boolean ascender = stop.col >= prevLn.endStop();
+
+					draw(gc, offset, stop.col, spcWidth, ascender);
 				}
 			}
 		}
 
+	}
+
+	private Line prevLine(int line, int tabWidth, Line currLn) {
+		if (currLn != null) return currLn;
+
+		int prev = line - 1;
+		if (prev >= 0) {
+			String text = widget.getLine(prev);
+			return new Line(prev, text, tabWidth);
+		}
+		return new Line(-1, Utils.EMPTY + Utils.NL_MARK, tabWidth);
 	}
 
 	// get previous non-blank line
@@ -255,10 +273,18 @@ public class GuidePainter implements IPainter, PaintListener {
 		return new Line(end, Utils.EMPTY + Utils.NL_MARK, tabWidth);
 	}
 
-	private void draw(GC gc, int offset, int col, int spcWidth) {
+	private void draw(GC gc, int offset, int col, int spcWidth, boolean ascender) {
 		Point pos = widget.getLocationAtOffset(offset);
 		pos.x += col * spcWidth + lineShift;
-		gc.drawLine(pos.x, pos.y, pos.x, pos.y + widget.getLineHeight(offset));
+
+		int sp = widget.getLineSpacing();
+		int ht = widget.getLineHeight(offset);
+
+		if (ascender) {
+			gc.drawLine(pos.x, pos.y - sp, pos.x, pos.y + ht + sp);
+		} else {
+			gc.drawLine(pos.x, pos.y, pos.x, pos.y + ht + sp);
+		}
 	}
 
 	public void loadPrefs() {
