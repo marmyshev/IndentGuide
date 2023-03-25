@@ -65,7 +65,7 @@ public class GuidePage extends PreferencePage implements IWorkbenchPreferencePag
 		Set<String> exclude = Utils.undelimit(getPreferenceStore().getString(Pref.CONTENT_TYPES));
 		excludeTypes = exclude.stream() //
 				.map(e -> Utils.getPlatformTextType(e)) //
-				.filter(t -> !t.equals(txtType)) //
+				.filter(t -> t != null && !txtType.equals(t)) //
 				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
@@ -131,7 +131,8 @@ public class GuidePage extends PreferencePage implements IWorkbenchPreferencePag
 		Composite comp = createGroup(parent, Messages.contenttype_group_label, true, 1);
 		blocks.add(comp);
 
-		CheckboxTreeViewer viewer = new CheckboxTreeViewer(comp, SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
+		CheckboxTreeViewer viewer = new CheckboxTreeViewer(comp,
+				SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
 		viewer.getControl().setFont(comp.getFont());
 		GridDataFactory.fillDefaults().hint(SWT.DEFAULT, 150).grab(true, true).applyTo(viewer.getControl());
 		parts.add(viewer);
@@ -186,7 +187,8 @@ public class GuidePage extends PreferencePage implements IWorkbenchPreferencePag
 	private void createVerticalSpacer(Composite comp, int lines, int span) {
 		Label spacer = new Label(comp, SWT.NONE);
 		int height = Utils.lineHeight(comp, lines);
-		GridDataFactory.fillDefaults().hint(SWT.DEFAULT, height).grab(true, false).span(span, 1).applyTo(spacer);
+		GridDataFactory.fillDefaults().hint(SWT.DEFAULT, height).grab(true, false).span(span, 1)
+				.applyTo(spacer);
 	}
 
 	private Label createLabel(Composite comp, String text) {
@@ -207,7 +209,8 @@ public class GuidePage extends PreferencePage implements IWorkbenchPreferencePag
 		return btn;
 	}
 
-	private Combo createLabeledCombo(Composite comp, String label, String trail, String[] styles, String key) {
+	private Combo createLabeledCombo(Composite comp, String label, String trail, String[] styles,
+			String key) {
 		createLabel(comp, label);
 		Combo combo = new Combo(comp, SWT.READ_ONLY);
 		combo.setData(key);
@@ -224,7 +227,8 @@ public class GuidePage extends PreferencePage implements IWorkbenchPreferencePag
 		return combo;
 	}
 
-	private Spinner createLabeledSpinner(Composite comp, String label, String trail, int min, int max, String key) {
+	private Spinner createLabeledSpinner(Composite comp, String label, String trail, int min, int max,
+			String key) {
 		createLabel(comp, label);
 
 		Spinner spin = new Spinner(comp, SWT.BORDER);
@@ -332,7 +336,8 @@ public class GuidePage extends PreferencePage implements IWorkbenchPreferencePag
 	}
 
 	/**
-	 * Returns the types of the checked, and optionally not grayed, elements in the tree viewer.
+	 * Returns the types of the checked, and optionally not grayed, elements in the tree
+	 * viewer.
 	 *
 	 * @param viewer the tree viewer
 	 * @param grayed include grayed if {@code true}; exclude grayed if {@code false}
@@ -343,7 +348,8 @@ public class GuidePage extends PreferencePage implements IWorkbenchPreferencePag
 				.collect(Collectors.toCollection(LinkedHashSet::new));
 
 		if (grayed) return checked;
-		return checked.stream().filter(t -> !viewer.getGrayed(t)).collect(Collectors.toCollection(LinkedHashSet::new));
+		return checked.stream().filter(t -> !viewer.getGrayed(t))
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	/** Returns the types of the unchecked tree viewer items */

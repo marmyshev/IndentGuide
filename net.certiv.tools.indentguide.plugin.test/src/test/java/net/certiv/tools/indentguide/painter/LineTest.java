@@ -1,4 +1,4 @@
-package net.certiv.tools.indentguide.util;
+package net.certiv.tools.indentguide.painter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
 
-import net.certiv.tools.indentguide.painter.Line;
+import net.certiv.tools.indentguide.util.Utils;
 
 class LineTest {
 
