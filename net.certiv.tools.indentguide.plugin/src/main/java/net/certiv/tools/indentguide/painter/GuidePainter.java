@@ -84,7 +84,8 @@ public class GuidePainter implements IPainter, PaintListener {
 
 		} else if (reason == TEXT_CHANGE) { // redraw current line only
 			try {
-				IRegion region = doc.getLineInformationOfOffset(Utils.docOffset(viewer, widget.getCaretOffset()));
+				IRegion region = doc
+						.getLineInformationOfOffset(Utils.docOffset(viewer, widget.getCaretOffset()));
 				int offset = Utils.widgetOffset(viewer, region.getOffset());
 				int cnt = widget.getCharCount();
 				int len = Math.min(region.getLength(), cnt - offset);
@@ -146,8 +147,6 @@ public class GuidePainter implements IPainter, PaintListener {
 	 */
 	private void drawLineRange(GC gc, int begLine, int endLine, int x, int w) {
 		int tabWidth = widget.getTabs();
-		int spcWidth = Math.max(0, gc.stringExtent(Utils.SPACE).x - 1);
-
 		StyledTextContent content = widget.getContent();
 
 		Line prevNb = null; // last non-blank line
@@ -174,7 +173,8 @@ public class GuidePainter implements IPainter, PaintListener {
 						currLn.delta = nextNb.tabs() - prevNb.tabs();
 
 						currLn.stops.clear();
-						currLn.stops.addAll(nextNb.stops); // default: same as next non-blank line
+						currLn.stops.addAll(nextNb.stops); // default: same as next
+															 // non-blank line
 						if (currLn.delta > 0 && currLn.tabs() > 1) {
 							currLn.stops.removeLast(); // shift in
 						}
@@ -215,7 +215,8 @@ public class GuidePainter implements IPainter, PaintListener {
 						// skip first where not zero unless drawBlankLn and drawLeadEdge
 						if (first && !zero && !(drawBlankLn && drawLeadEdge)) continue;
 
-						// skip first where zero and nest unless drawBlankLn and drawLeadEdge
+						// skip first where zero and nest unless drawBlankLn and
+						// drawLeadEdge
 						if (first && zero && nest && !(drawBlankLn && drawLeadEdge)) continue;
 
 					} else {
@@ -226,9 +227,8 @@ public class GuidePainter implements IPainter, PaintListener {
 						if (first && !drawLeadEdge) continue;
 					}
 
-					boolean ascender = stop.col >= prevLn.endStop();
-
-					draw(gc, offset, stop.col, spcWidth, ascender);
+					boolean asc = stop.col >= prevLn.endStop();
+					draw(gc, offset, stop.pos, asc);
 				}
 			}
 		}
@@ -273,14 +273,14 @@ public class GuidePainter implements IPainter, PaintListener {
 		return new Line(end, Utils.EMPTY + Utils.NL_MARK, tabWidth);
 	}
 
-	private void draw(GC gc, int offset, int col, int spcWidth, boolean ascender) {
-		Point pos = widget.getLocationAtOffset(offset);
-		pos.x += col * spcWidth + lineShift;
+	private void draw(GC gc, int offset, int col, boolean asc) {
+		Point pos = widget.getLocationAtOffset(offset + col);
+		pos.x += lineShift;
 
 		int sp = widget.getLineSpacing();
 		int ht = widget.getLineHeight(offset);
 
-		if (ascender) {
+		if (asc) {
 			gc.drawLine(pos.x, pos.y - sp, pos.x, pos.y + ht + sp);
 		} else {
 			gc.drawLine(pos.x, pos.y, pos.x, pos.y + ht + sp);
