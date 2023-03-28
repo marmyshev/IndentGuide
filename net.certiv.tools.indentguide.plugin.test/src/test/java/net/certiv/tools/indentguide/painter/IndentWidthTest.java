@@ -6,55 +6,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
-import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.layout.FillLayout;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class IndentWidthTest {
-
-	public final static boolean isWin = SWT.getPlatform().startsWith("win32");
-	public final static boolean isCocoa = SWT.getPlatform().startsWith("cocoa");
-	public final static boolean isGTK = SWT.getPlatform().equals("gtk");
-	public final static boolean isWinOS = System.getProperty("os.name").startsWith("Windows");
-	public final static boolean isLinux = System.getProperty("os.name").equals("Linux");
-
-	String[] fontnames = new String[] { //
-			"Consolas", "Courier New", "Menlo", //
-			"Fira Code", "Source Code Pro", "Liberation Mono" //
-	};
-
-	Display display;
-	Shell shell;
-	GC gc;
-
-	StyledText widget;
-
-	@BeforeEach
-	public void setUp() {
-		// display = new Display();
-		shell = new Shell(display);
-		gc = new GC(shell);
-
-		shell.setSize(200, 200);
-		shell.setLayout(new FillLayout());
-
-		widget = new StyledText(shell, SWT.BORDER);
-		widget.setText("This is some dummy text. Sufficient text to have the scroll bars appear.");
-	}
-
-	@AfterEach
-	public void tearDown() {
-		if (gc != null) gc.dispose();
-		if (shell != null) shell.dispose();
-	}
+class IndentWidthTest extends TestBase {
 
 	@Test
 	void test_stringExtent() {

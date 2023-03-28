@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: IndentGuide
 Bundle-SymbolicName: net.certiv.tools.indentguide;singleton:=true
-Bundle-Version: 2.2.2.qualifier
+Bundle-Version: 2.2.4.qualifier
 Bundle-Activator: net.certiv.tools.indentguide.Activator
 Bundle-Vendor: Certiv Analytics
 Require-Bundle: org.eclipse.core.runtime;bundle-version="[3.24.100,4.0.0)",

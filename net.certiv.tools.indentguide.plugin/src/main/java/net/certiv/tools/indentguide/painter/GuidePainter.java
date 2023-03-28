@@ -26,6 +26,7 @@ import org.eclipse.swt.graphics.Point;
 
 import net.certiv.tools.indentguide.Activator;
 import net.certiv.tools.indentguide.preferences.Pref;
+import net.certiv.tools.indentguide.util.MsgBuilder;
 import net.certiv.tools.indentguide.util.Utils;
 
 /**
@@ -51,6 +52,10 @@ public class GuidePainter implements IPainter, PaintListener {
 	private boolean drawLeadEdge;
 	private boolean drawBlankLn;
 	private boolean drawComment;
+
+	private Line prevNb; // prior non-blank line
+	private Line currLn; // current line
+	private Line nextNb; // next non-blank line
 
 	/**
 	 * Creates a new painter for the given text viewer.
@@ -149,43 +154,43 @@ public class GuidePainter implements IPainter, PaintListener {
 		int tabWidth = widget.getTabs();
 		StyledTextContent content = widget.getContent();
 
-		Line prevNb = null; // last non-blank line
-		Line prevLn = null; // immediately prior line
-		Line currLn = null; // current line
-		Line nextNb = null; // next non-blank line
+		prevNb = null;
+		currLn = null;
+		nextNb = null;
 
 		for (int line = begLine; line <= endLine; line++) {
 			int offset = widget.getOffsetAtLine(line);
+			int height = widget.getLineHeight(offset);
+			int spacing = widget.getLineSpacing();
+
 			int docLine = content.getLineAtOffset(offset); // 0..n
 
 			if (!Utils.isFolded(viewer, docLine)) {
-				String text = widget.getLine(line);
-				prevLn = prevLine(docLine, tabWidth, currLn);
-				currLn = new Line(docLine, text, tabWidth);
+				prevNb = prevNonblankLine(line, tabWidth);
+				currLn = new Line(widget, line, tabWidth);
 
 				if (drawBlankLn) {
 					if (currLn.blank) {
-						prevNb = prevNonblankLine(prevNb, docLine, tabWidth);
-						nextNb = nextNonblankLine(nextNb, docLine, tabWidth);
-						// log(ln.dir, prevNb, ln, nextNb);
+						nextNb = nextNonblankLine(line, tabWidth);
 
 						// change in dents: - <-> +
 						currLn.delta = nextNb.tabs() - prevNb.tabs();
 
+						// capture prevLn stop locations
 						currLn.stops.clear();
-						currLn.stops.addAll(nextNb.stops); // default: same as next
-															 // non-blank line
-						if (currLn.delta > 0 && currLn.tabs() > 1) {
-							currLn.stops.removeLast(); // shift in
-						}
+						currLn.stops.addAll(prevNb.stops);
 
-					} else {
-						prevNb = currLn;
+						log(currLn.delta, prevNb, currLn, nextNb);
+
+						// adjust stops dependent on delta
+						if (currLn.delta < 0 && currLn.tabs() > 1) {
+							currLn.stops.removeLast(); // shift in by one
+						}
 					}
 				}
 
-				boolean nest = currLn.tabs() > 1;
 				boolean only = currLn.tabs(1);
+				boolean multi = currLn.tabs() > 1;
 				boolean zero = currLn.delta == 0;
 
 				for (Pos stop : currLn.stops) {
@@ -215,9 +220,9 @@ public class GuidePainter implements IPainter, PaintListener {
 						// skip first where not zero unless drawBlankLn and drawLeadEdge
 						if (first && !zero && !(drawBlankLn && drawLeadEdge)) continue;
 
-						// skip first where zero and nest unless drawBlankLn and
+						// skip first where zero and multi unless drawBlankLn and
 						// drawLeadEdge
-						if (first && zero && nest && !(drawBlankLn && drawLeadEdge)) continue;
+						if (first && zero && multi && !(drawBlankLn && drawLeadEdge)) continue;
 
 					} else {
 						// skip first visible character
@@ -227,64 +232,47 @@ public class GuidePainter implements IPainter, PaintListener {
 						if (first && !drawLeadEdge) continue;
 					}
 
-					boolean asc = stop.col >= prevLn.endStop();
-					draw(gc, offset, stop.pos, asc);
+					boolean asc = stop.col >= prevNb.endStop();
+					Point pos = widget.getLocationAtOffset(offset);
+					draw(gc, pos, stop.loc, spacing, height, asc);
 				}
 			}
 		}
-
 	}
 
-	private Line prevLine(int line, int tabWidth, Line currLn) {
-		if (currLn != null) return currLn;
-
-		int prev = line - 1;
-		if (prev >= 0) {
-			String text = widget.getLine(prev);
-			return new Line(prev, text, tabWidth);
-		}
-		return new Line(-1, Utils.EMPTY + Utils.NL_MARK, tabWidth);
-	}
-
-	// get previous non-blank line
-	private Line prevNonblankLine(Line prevNb, int line, int tabWidth) {
-		if (prevNb != null && prevNb.num > -1 && prevNb.num < line) return prevNb;
-
-		for (int prev = line - 1; prev >= 0; prev--) {
-			String text = widget.getLine(prev);
-			if (!text.isBlank()) {
-				return new Line(prev, text, tabWidth);
-			}
-		}
-		return new Line(-1, Utils.EMPTY + Utils.NL_MARK, tabWidth);
-	}
-
-	// get next non-blank line
-	private Line nextNonblankLine(Line nextNb, int line, int tabWidth) {
-		int end = widget.getLineCount();
-		if (nextNb != null && nextNb.num < end && nextNb.num > line) return nextNb;
-
-		for (int next = line + 1; next < end; next++) {
-			String text = widget.getLine(next);
-			if (!text.isBlank()) {
-				return new Line(next, text, tabWidth);
-			}
-		}
-		return new Line(end, Utils.EMPTY + Utils.NL_MARK, tabWidth);
-	}
-
-	private void draw(GC gc, int offset, int col, boolean asc) {
-		Point pos = widget.getLocationAtOffset(offset + col);
-		pos.x += lineShift;
-
-		int sp = widget.getLineSpacing();
-		int ht = widget.getLineHeight(offset);
-
+	private void draw(GC gc, Point pos, int loc, int sp, int ht, boolean asc) {
+		pos.x += loc + lineShift;
 		if (asc) {
 			gc.drawLine(pos.x, pos.y - sp, pos.x, pos.y + ht + sp);
 		} else {
 			gc.drawLine(pos.x, pos.y, pos.x, pos.y + ht + sp);
 		}
+	}
+
+	private Line prevNonblankLine(int line, int tabWidth) {
+		if (currLn != null && !currLn.blank) return currLn;
+		if (prevNb != null && prevNb.line < line) return prevNb;
+
+		for (int prev = line - 1; prev >= 0; prev--) {
+			String text = widget.getLine(prev);
+			if (!text.isBlank()) {
+				return new Line(widget, prev, tabWidth);
+			}
+		}
+		return new Line(null, -1, tabWidth);
+	}
+
+	private Line nextNonblankLine(int line, int tabWidth) {
+		int end = widget.getLineCount();
+		if (nextNb != null && nextNb.line < end && nextNb.line > line) return nextNb;
+
+		for (int next = line + 1; next < end; next++) {
+			String text = widget.getLine(next);
+			if (!text.isBlank()) {
+				return new Line(widget, next, tabWidth);
+			}
+		}
+		return new Line(null, end, tabWidth);
 	}
 
 	public void loadPrefs() {
@@ -341,11 +329,12 @@ public class GuidePainter implements IPainter, PaintListener {
 	@Override
 	public void setPositionManager(IPaintPositionManager manager) {}
 
-	// void log(int rel, Line prevNb, Line ln, Line nextNb) {
-	// Activator.log(new MsgBuilder("Rel position %s", rel) //
-	// .appendNL("Prev: %s", prevNb) //
-	// .appendNL("Curr: %s", ln) //
-	// .appendNL("Next: %s", nextNb)) //
-	// ;
-	// }
+	void log(int delta, Line prevNb, Line currLn, Line nextNb) {
+		Activator.log(new MsgBuilder() //
+				.nl().append("Delta: %s", delta) //
+				.nl().append("PrevNb: %s", prevNb) //
+				.nl().append("CurrLn: %s", currLn) //
+				.nl().append("NextNb: %s", nextNb)) //
+		;
+	}
 }

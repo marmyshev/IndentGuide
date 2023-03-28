@@ -87,6 +87,11 @@ public class MsgBuilder {
 		return this;
 	}
 
+	public MsgBuilder sp() {
+		sb.append(Utils.SPACE);
+		return this;
+	}
+
 	public MsgBuilder clear() {
 		sb.setLength(0);
 		return this;

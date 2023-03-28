@@ -1,8 +1,19 @@
+/******************************************************************************
+ * Copyright (c) 2006-2023 The IndentGuide Authors.
+ * All rights reserved.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the MIT License.  A copy of the MIT License is included this
+ * distribution and is available at https://opensource.org/licenses/MIT.
+ *****************************************************************************/
 package net.certiv.tools.indentguide.painter;
 
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.regex.Pattern;
+
+import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.graphics.Point;
 
 import net.certiv.tools.indentguide.util.MsgBuilder;
 import net.certiv.tools.indentguide.util.Utils;
@@ -19,11 +30,13 @@ public class Line implements Iterable<Pos> {
 					+ "))$" 				// $NON-NLS-1$
 	);
 
+	/** The control */
+	public final StyledText widget;
 	/** The line number (0..n) */
-	public final int num;
+	public final int line;
 	/** The line text */
 	public final String txt;
-	/** The assigned tabwidth */
+	/** The assigned tab width */
 	public final int tabwidth;
 
 	/** Is a blank line */
@@ -33,7 +46,7 @@ public class Line implements Iterable<Pos> {
 	/** Is a block comment body line */
 	public final boolean comment;
 
-	/** List of the leading tab stops */
+	/** List of the lead tab stops */
 	public final LinkedList<Pos> stops = new LinkedList<>();
 
 	/** First visible text column */
@@ -42,16 +55,21 @@ public class Line implements Iterable<Pos> {
 	/** Change in indents between non-blank lines surrounding this line. */
 	public int delta;
 
+	public static Line of(StyledText widget, int line, int tabwidth) {
+		return new Line(widget, line, tabwidth);
+	}
+
 	/**
 	 * Creates a new Line.
 	 *
-	 * @param num      the line number (0..n) within the document
-	 * @param txt      the line raw text content
+	 * @param widget
+	 * @param line     the line number (0..n) within the widget
 	 * @param tabwidth the document defined tabwidth
 	 */
-	public Line(int num, String txt, int tabwidth) {
-		this.num = num;
-		this.txt = stripTerminals(txt);
+	public Line(StyledText widget, int line, int tabwidth) {
+		this.widget = widget;
+		this.line = line;
+		this.txt = widget != null ? widget.getLine(line) : Utils.EMPTY;
 		this.tabwidth = tabwidth;
 
 		blank = this.txt.isBlank();
@@ -62,16 +80,6 @@ public class Line implements Iterable<Pos> {
 		comment = inBlockComment();
 	}
 
-	private String stripTerminals(String txt) {
-		if (txt == null) return Utils.EMPTY;
-		int dot = txt.indexOf(Utils.EOL);
-		if (dot > -1) {
-			txt = txt.substring(0, dot);
-		}
-		if (txt.isBlank()) return txt;
-		return txt.stripTrailing();
-	}
-
 	private int process() {
 		int beg = 0;
 		for (int pos = 0, col = 0; pos < length; pos++) {
@@ -79,12 +87,12 @@ public class Line implements Iterable<Pos> {
 			switch (ch) {
 				case Utils.SPC:
 					beg = col += Character.charCount(ch);
-					if (col % tabwidth == 0) stops.add(Pos.at(pos + 1, col));
+					if (col % tabwidth == 0) stops.add(pos(stops.size(), pos + 1, col));
 					break;
 
 				case Utils.TAB:
 					beg = col += tabwidth - (col % tabwidth);
-					stops.add(Pos.at(pos + 1, col));
+					stops.add(pos(stops.size(), pos + 1, col));
 					break;
 
 				default:
@@ -93,6 +101,12 @@ public class Line implements Iterable<Pos> {
 			}
 		}
 		return beg;
+	}
+
+	private Pos pos(int idx, int pos, int col) {
+		int offset = widget.getOffsetAtLine(line);
+		Point loc = widget.getLocationAtOffset(offset + pos);
+		return Pos.at(idx, pos, col, loc.x);
 	}
 
 	private boolean inBlockComment() {
@@ -137,10 +151,12 @@ public class Line implements Iterable<Pos> {
 
 	@Override
 	public String toString() {
-		MsgBuilder mb = new MsgBuilder("Line %s: \"%s\" ", num + 1, Utils.encode(txt)) //
-				.append(!stops.isEmpty(), "%s:%s ", stops.size(), stops) //
-				.append(blank, "%s ", "Blank") //
-				.append(!blank, "len=%s beg=%s", length, beg);
+		MsgBuilder mb = new MsgBuilder() //
+				.append("Line %s:", line) //
+				.append(" %s", stops) //
+				.append(blank, " %s", "Blank") //
+				.append(!blank, " %s[%s]", beg, length) //
+				.append("\t %s", Utils.encode(txt));
 		return mb.toString();
 	}
 }
