@@ -26,7 +26,6 @@ import org.eclipse.swt.graphics.Point;
 
 import net.certiv.tools.indentguide.Activator;
 import net.certiv.tools.indentguide.preferences.Pref;
-import net.certiv.tools.indentguide.util.MsgBuilder;
 import net.certiv.tools.indentguide.util.Utils;
 
 /**
@@ -180,7 +179,7 @@ public class GuidePainter implements IPainter, PaintListener {
 						currLn.stops.clear();
 						currLn.stops.addAll(prevNb.stops);
 
-						log(currLn.delta, prevNb, currLn, nextNb);
+						// log(currLn.delta, prevNb, currLn, nextNb);
 
 						// adjust stops dependent on delta
 						if (currLn.delta < 0 && currLn.tabs() > 1) {
@@ -329,12 +328,12 @@ public class GuidePainter implements IPainter, PaintListener {
 	@Override
 	public void setPositionManager(IPaintPositionManager manager) {}
 
-	void log(int delta, Line prevNb, Line currLn, Line nextNb) {
-		Activator.log(new MsgBuilder() //
-				.nl().append("Delta: %s", delta) //
-				.nl().append("PrevNb: %s", prevNb) //
-				.nl().append("CurrLn: %s", currLn) //
-				.nl().append("NextNb: %s", nextNb)) //
-		;
-	}
+	// void log(int delta, Line prevNb, Line currLn, Line nextNb) {
+	// Activator.log(new MsgBuilder() //
+	// .nl().append("Delta: %s", delta) //
+	// .nl().append("PrevNb: %s", prevNb) //
+	// .nl().append("CurrLn: %s", currLn) //
+	// .nl().append("NextNb: %s", nextNb)) //
+	// ;
+	// }
 }

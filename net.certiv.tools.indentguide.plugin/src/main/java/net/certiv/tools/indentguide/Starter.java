@@ -175,7 +175,8 @@ public class Starter implements IStartup {
 		IDocumentProvider provider = editor.getDocumentProvider();
 		if (provider instanceof IDocumentProviderExtension4) {
 			try {
-				IContentType type = ((IDocumentProviderExtension4) provider).getContentType(editor.getEditorInput());
+				IContentType type = ((IDocumentProviderExtension4) provider)
+						.getContentType(editor.getEditorInput());
 				if (type != null) return type;
 			} catch (CoreException e) {
 				Activator.log(e);
@@ -245,7 +246,7 @@ public class Starter implements IStartup {
 			IWorkbenchPart part = ref.getPart(false);
 			if (part instanceof MultiPageEditorPart || part instanceof AbstractTextEditor) {
 				installPainter(part);
-				Activator.log("part opened '%s'", Utils.nameOf(part));
+				// Activator.log("part opened '%s'", Utils.nameOf(part));
 			}
 		}
 
@@ -254,7 +255,7 @@ public class Starter implements IStartup {
 			IWorkbenchPart part = ref.getPart(false);
 			if (part instanceof MultiPageEditorPart || part instanceof AbstractTextEditor) {
 				deactivate(part);
-				Activator.log("part closed '%s'", Utils.nameOf(part));
+				// Activator.log("part closed '%s'", Utils.nameOf(part));
 			}
 		}
 
@@ -262,7 +263,8 @@ public class Starter implements IStartup {
 		public void pageChanged(PageChangedEvent evt) {
 			IPageChangeProvider provider = evt.getPageChangeProvider();
 			if (provider instanceof MultiPageEditorPart) {
-				Activator.log("MultiPageEditor page change '%s'", Utils.nameOf(provider));
+				// Activator.log("MultiPageEditor page change '%s'",
+				// Utils.nameOf(provider));
 				installPainter((IWorkbenchPart) provider);
 			}
 		}
@@ -277,12 +279,12 @@ public class Starter implements IStartup {
 			Object now = evt.getNewValue();
 
 			if (prop.equals(IThemeManager.CHANGE_CURRENT_THEME)) {
-				Activator.log("theme change '%s' [%s] => [%s]", prop, old, now);
+				// Activator.log("theme change '%s' [%s] => [%s]", prop, old, now);
 				refreshAll();
 
 			} else if (prop.startsWith(Pref.KEY)) {
 				if (prop.equals(Pref.ENABLED)) {
-					Activator.log("status change '%s' [%s] => [%s]", prop, old, now);
+					// Activator.log("status change '%s' [%s] => [%s]", prop, old, now);
 					if ((boolean) now) {
 						initWorkbenchWindows();
 
@@ -294,7 +296,8 @@ public class Starter implements IStartup {
 					updateContentTypes();
 
 					// Note: logic is reversed because it is an exclusion list
-					Delta<String> delta = Delta.of(Utils.undelimit((String) now), Utils.undelimit((String) old));
+					Delta<String> delta = Delta.of(Utils.undelimit((String) now),
+							Utils.undelimit((String) old));
 					if (delta.changed()) {
 						MsgBuilder mb = new MsgBuilder("content type change [%s]", prop);
 
@@ -311,8 +314,8 @@ public class Starter implements IStartup {
 						Activator.log(mb.toString());
 					}
 
-				} else {
-					Activator.log("property change '%s' [%s] => [%s]", prop, old, now);
+					// } else {
+					// Activator.log("property change '%s' [%s] => [%s]", prop, old, now);
 				}
 
 				refreshAll();
@@ -326,19 +329,19 @@ public class Starter implements IStartup {
 		IContentType type;
 		ISourceViewer viewer;
 		GuidePainter painter;
-	
+
 		Data(IWorkbenchPart part, AbstractTextEditor editor, IContentType type, ISourceViewer viewer) {
 			this.part = part;
 			this.editor = editor;
 			this.type = type;
 			this.viewer = viewer;
 		}
-	
+
 		@Override
 		public int hashCode() {
 			return Objects.hash(part, editor);
 		}
-	
+
 		@Override
 		public boolean equals(Object obj) {
 			if (this == obj) return true;
