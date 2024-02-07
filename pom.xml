@@ -10,19 +10,22 @@
 	<artifactId>net.certiv.tools.indentguide.parent</artifactId>
 	<version>2.2.5-SNAPSHOT</version>
 	
-	<name>IndentGuide</name>
+	<name>Indent-Guide 1C:EDT plugin</name>
 	<description>IndentGuide</description>
 	<organization>
-		<name>Certiv Analytics</name>
-		<url>http://www.certiv.net/</url>
+		<name>Dmitriy Marmyshev</name>
+		<url>https://github.com/marmyshev</url>
 	</organization>
+	<scm>
+    	<connection>scm:git:git@github.com:marmyshev/indent-guide.git</connection>
+  	</scm>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
-		<tycho.version>3.0.1</tycho.version>
-		<eclipse.repo.url>http://download.eclipse.org/releases/latest</eclipse.repo.url>
+		<tycho.version>2.7.0</tycho.version>
+		<eclipse.repo.url>https://download.eclipse.org/releases/2022-03/</eclipse.repo.url>
 	</properties>
 	
 	<modules>
@@ -102,6 +105,15 @@
 						<archive>
 							<addMavenDescriptor>false</addMavenDescriptor>
 						</archive>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.eclipse.tycho</groupId>
+					<artifactId>tycho-p2-repository-plugin</artifactId>
+					<version>${tycho.version}</version>
+					<configuration>
+						<repositoryName>Repository</repositoryName>
+						<finalName>${project.artifactId}</finalName>
 					</configuration>
 				</plugin>
 			</plugins>

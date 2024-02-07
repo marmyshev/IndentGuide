@@ -12,6 +12,6 @@
 		<version>2.2.5-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>net.certiv.tools.indentguide.site</artifactId>
+	<artifactId>indentguide-repository</artifactId>
 
 </project>

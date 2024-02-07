@@ -1,16 +1,17 @@
-## IndentGuide Plugin for Eclipse
+## Indent-Guide Plugin for 1C:EDT & Eclipse
 
-### Description
+### Описание
 
-Adds configurable indent guide lines in Eclipse text editors.
+Плагин добавляет настраиваемые полоски отступов в текстовых редакторах 1C:EDT и Eclipse.
+
 
 <figure>
 <img src="Screenshot.png" alt="IndentGuide Example">
 </figure>
 
-### Preferences
+### Настройки
 
-The preference page can be found at 
+Страница настроек расположена:
 
 > **`Window`&rarr;`General`&rarr;`Editors`&rarr;`Text Editors`&rarr;`Indent Guide`**
 
@@ -18,10 +19,9 @@ The preference page can be found at
 	<img src="Settings.png" style="border:1px solid black" alt="IndentGuide Preference Page">
 </figure>
 
-### Update Site
+### Сайт обновлений
 
-Certiv Tools<br>
-https://www.certiv.net/updates
+https://github.com/marmyshev/indent-guide/releases
 
 ### License
 
