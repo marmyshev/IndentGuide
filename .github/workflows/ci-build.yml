@@ -36,27 +36,12 @@ jobs:
       working-directory: ./
       run: mvn clean verify -Dtycho.localArtifacts=ignore -B -V
 
-    - name: Publish Test Report
-      uses: scacap/action-surefire-report@v1
-      if: always()
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-  
     - name: Upload repo
       uses: actions/upload-artifact@v2
       with:
         name: repo
         path: net.certiv.tools.indentguide.site/target/repository/
         
-    - name: Upload JaCoCo exec data
-      uses: actions/upload-artifact@v2
-      if: always()
-      with:
-        name: jacoco
-        path: |
-          ./**/target/jacoco.exec
-          ./**/target/site/jacoco*/
-    
     - name: Upload test logs on failure
       uses: actions/upload-artifact@v2
       if: failure()
